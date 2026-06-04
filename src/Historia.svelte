@@ -3,6 +3,10 @@
 	<link rel="stylesheet" href="/styles/historia.css" />
 </svelte:head>
 
+<script>
+	import { trocarEstadoDoJogo } from './Estado.js'
+</script>
+
 <main>
 
 <div class="texto-hist"> 
@@ -13,6 +17,10 @@
 	Guie Thomas nessa jornada e tente encontrar o caminho certo para chegar no final do labirinto.</b>
 </p>
 </div>
+
+<button class='historia' on:click={() => trocarEstadoDoJogo('game')}>
+	Entrar na Caverna
+</button>
 
 </main>
 

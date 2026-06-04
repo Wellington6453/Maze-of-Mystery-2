@@ -1,5 +1,5 @@
 <script>
-	import AllGames from './AllGames.svelte'
+	import Game from './Game.svelte'
 	import Sobre from './Sobre.svelte'
 	import Menu from './Menu.svelte'
 	import Ajuda from './Ajuda.svelte'
@@ -15,7 +15,7 @@
 {:else if $estado === 'sobre'}
 	<Sobre/>
 {:else if $estado === 'game'}
-	<AllGames/>
+	<Game/>
 {:else if $estado === 'ajuda'}
 	<Ajuda/>
 {:else if $estado === 'historia'}
