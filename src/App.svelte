@@ -1,24 +1,23 @@
 <script>
-	import Game from './Game.svelte'
-	import Sobre from './Sobre.svelte'
-	import Menu from './Menu.svelte'
-	import Ajuda from './Ajuda.svelte'
-	import Historia from './Historia.svelte'
-
-
-	import { estado } from './Estado.js'
+  import Game from './Game.svelte'
+  import Sobre from './Sobre.svelte'
+  import Menu from './Menu.svelte'
+  import Ajuda from './Ajuda.svelte'
+  import Historia from './Historia.svelte'
+  import { estado } from './Estado.js'
 </script>
- 
+
+
 
 {#if $estado === 'menu'}
-	<Menu/>
+  <Menu/>
 {:else if $estado === 'sobre'}
-	<Sobre/>
+  <Sobre/>
 {:else if $estado === 'game'}
-	<Game/>
+  <Game/>
 {:else if $estado === 'ajuda'}
-	<Ajuda/>
+  <Ajuda/>
 {:else if $estado === 'historia'}
-	<Historia/>
+  <Historia/>
 {/if}
 

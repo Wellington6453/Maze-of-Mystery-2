@@ -18,8 +18,7 @@
     "svelte": "^3.0.0"
   },
   "dependencies": {
-    "sirv-cli": "^1.0.0",
-    "sweetalert": "^2.1.2",
-    "sweetalert2": "^11.4.8"
+    "kaplay": "^3001.0.9",
+    "sirv-cli": "^1.0.0"
   }
 }

@@ -1,26 +1,360 @@
 <svelte:head>
-	<link rel="stylesheet" href="./styles/ajuda.css">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </svelte:head>
 
 <script>
-	import VoltarMenu from './VoltarMenu.svelte'
+  import { trocarEstadoDoJogo } from './Estado.js'
 </script>
 
-<h1 class= titulo-ajuda>
-	Como jogar?
-	</h1>
-	<main>
-  <div class="texto">
-	<p><b>Utilize as arrow keys(teclas direcionais/setinhas) para ajudar Thomas a sair do labirinto.<br><br>
-		<i> Right arrow (seta para a direita):para quando quiser andar para a direita;<br>
-		  Left arrow (seta para a esquerda):quando quiser que ele ande para a esquerda; <br>
-		  Arrow down (seta para baixo):para quando quiser que o personagem desça; <br>
-		  Arrow up (seta para cima): quando quiser move-lo para cima. <br></i></b>
-		<img src="/images/akey1.png" alt=""></p>
-		<p> Recomendamos também que utilize o mouse para ajudar a controlar o scroll!</p>
-</div>
-	</main>
-	
-	
+<div class="screen">
+  <div class="bg-layer">
+    <img src="/images/background.png" alt="" class="bg-image">
+    <div class="bg-overlay"></div>
+  </div>
 
-	<VoltarMenu/>
+  <div class="scroll-area">
+    <div class="container">
+      <h1 class="title">COMO JOGAR</h1>
+
+      <div class="card">
+        <h2 class="subtitle">Aventura na Caverna dos Mistérios</h2>
+        <p class="text">
+          Após retornar de suas antigas explorações, Thomas se vê novamente preso em um lugar desconhecido. Desta vez, uma gigantesca caverna está entrando em colapso, e escapar não será tão simples quanto encontrar uma saída.
+        </p>
+        <p class="text">
+          Corredores escuros escondem equipamentos, criaturas perigosas e segredos esquecidos pelo tempo. Apenas os exploradores mais persistentes conseguirão sobreviver.
+        </p>
+
+        <h2 class="subtitle green">Controles</h2>
+        <p class="text">Use as teclas WASD para movimentar Thomas:</p>
+        <div class="controls">
+          {#each [
+            { key: 'W', desc: 'Tecla W — Mover para cima' },
+            { key: 'S', desc: 'Tecla S — Mover para baixo' },
+            { key: 'A', desc: 'Tecla A — Mover para a esquerda' },
+            { key: 'D', desc: 'Tecla D — Mover para a direita' },
+          ] as control}
+            <p class="control-item">
+              <span class="key-badge">{control.key}</span>
+              {control.desc}
+            </p>
+          {/each}
+        </div>
+
+        <h2 class="subtitle">Sua Missão</h2>
+        <p class="text">Seu objetivo é escapar da Caverna dos Mistérios antes que ela desmorone completamente.</p>
+
+        <h3 class="subsubtitle green">Explore</h3>
+        <p class="text">Ao longo da jornada você encontrará:</p>
+        <div class="list">
+          {#each [
+            'Equipamentos esquecidos',
+            'Recursos que podem ajudar em futuras explorações',
+            'Tesouros escondidos',
+            'Novos caminhos e atalhos',
+          ] as item}
+            <p class="list-item"><span class="arrow">➤</span> {item}</p>
+          {/each}
+        </div>
+
+        <h3 class="subsubtitle red">Sobreviva</h3>
+        <p class="text">Nem todos os habitantes da caverna gostam de visitantes. Prepare-se para enfrentar:</p>
+        <div class="list">
+          {#each [
+            'Ratos Gigantes',
+            'Morcegos das Cavernas',
+            'Goblins',
+            'Goblins Arqueiros',
+            'Uma criatura ancestral que guarda a chave para sua liberdade...',
+          ] as enemy}
+            <p class="list-item"><span class="arrow">➤</span> {enemy}</p>
+          {/each}
+        </div>
+
+        <h2 class="subtitle">Dicas do Explorador</h2>
+        <div class="list">
+          {#each [
+            'Explore todos os cantos do labirinto.',
+            'Alguns caminhos parecem inúteis, mas podem esconder recompensas.',
+            'Nem toda batalha precisa ser enfrentada imediatamente.',
+            'Equipamentos podem fazer a diferença entre escapar ou ficar preso para sempre.',
+            'O tempo está sempre correndo.',
+          ] as tip}
+            <p class="list-item"><span class="arrow">➤</span> {tip}</p>
+          {/each}
+        </div>
+
+        <h2 class="subtitle green">Lembre-se</h2>
+        <p class="text italic">
+          "Os tesouros da caverna atraíram Thomas para as profundezas...
+        </p>
+        <p class="text italic">
+          Agora, encontrar a saída pode ser o maior desafio de sua vida."
+        </p>
+
+        <p class="footer-text">Boa sorte, explorador!</p>
+        <p class="footer-sub">Maze of Mystery II — Escape da Caverna</p>
+      </div>
+
+      <div class="back-wrapper">
+        <button class="back-btn" on:click={() => trocarEstadoDoJogo('menu')}>
+          <div class="back-bg">
+            <div class="back-glow"></div>
+            <span class="back-label">VOLTAR</span>
+          </div>
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .screen {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1) translateX(-8px);
+    transform-origin: center center;
+  }
+
+  .bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.7) 100%);
+  }
+
+  .scroll-area {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .title {
+    text-align: center;
+    color: #fef3c7;
+    margin-bottom: 16px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 16px;
+    line-height: 1.4;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 #000;
+  }
+
+  .card {
+    background: rgba(0,0,0,0.6);
+    border: 3px solid #b45309;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 0 2px #451a03;
+  }
+
+  .subtitle {
+    color: #fde68a;
+    margin-bottom: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .subtitle.green { color: #86efac; }
+
+  .subsubtitle {
+    margin-bottom: 6px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .subsubtitle.green { color: #86efac; }
+  .subsubtitle.red { color: #f87171; }
+
+  .text {
+    color: rgba(254, 243, 199, 0.9);
+    margin-bottom: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .text.italic {
+    font-style: italic;
+    color: rgba(254, 243, 199, 0.8);
+  }
+
+  .controls {
+    margin-left: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .control-item {
+    color: rgba(254, 243, 199, 0.9);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .key-badge {
+    color: #4ade80;
+    background: rgba(120, 53, 15, 0.5);
+    padding: 2px 6px;
+    border: 2px solid #16a34a;
+    margin-right: 6px;
+    font-size: 8px;
+  }
+
+  .list {
+    margin-left: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .list-item {
+    color: rgba(254, 243, 199, 0.9);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .arrow {
+    color: #4ade80;
+  }
+
+  .footer-text {
+    text-align: center;
+    color: #86efac;
+    margin-bottom: 12px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .footer-sub {
+    text-align: center;
+    color: rgba(253, 230, 138, 0.7);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    line-height: 1.6;
+    text-shadow: 1px 1px 0 #000;
+    margin-bottom: 0;
+  }
+
+  .back-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 16px;
+  }
+
+  .back-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .back-bg {
+    position: relative;
+    padding: 8px 32px;
+    background: linear-gradient(to bottom, #78350f, #451a03);
+    border: 3px solid #b45309;
+    box-shadow: 0 0 0 2px #451a03, 0 4px 0 0 #451a03;
+    transition: all 0.15s ease;
+    image-rendering: pixelated;
+  }
+
+  .back-btn:hover .back-bg {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 2px #451a03, 0 2px 0 0 #451a03;
+  }
+
+  .back-glow {
+    position: absolute;
+    inset: 0;
+    background: rgba(34, 197, 94, 0.2);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .back-btn:hover .back-glow {
+    opacity: 1;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .back-label {
+    position: relative;
+    z-index: 10;
+    display: block;
+    text-align: center;
+    color: #fef3c7;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+    transition: color 0.15s ease;
+  }
+
+  .back-btn:hover .back-label {
+    color: #86efac;
+  }
+
+  .corner {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    opacity: 0.7;
+  }
+
+  .corner.tl { top: -3px; left: -3px; }
+  .corner.tr { top: -3px; right: -3px; }
+  .corner.bl { bottom: -3px; left: -3px; }
+  .corner.br { bottom: -3px; right: -3px; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .scroll-area::-webkit-scrollbar { width: 8px; }
+  .scroll-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+  .scroll-area::-webkit-scrollbar-thumb { background: #b45309; border-radius: 4px; }
+</style>

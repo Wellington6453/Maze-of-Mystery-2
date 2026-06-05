@@ -1,47 +1,199 @@
 <svelte:head>
-	<link rel="stylesheet" href="/styles/menu.css">
-	<link href="https://fonts.cdnfonts.com/css/the-wild-breath-of-zelda" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </svelte:head>
 
 <script>
-	import { trocarEstadoDoJogo } from './Estado.js'
+  import { trocarEstadoDoJogo } from './Estado.js'
 
-	function sairDoJogo() {
-		window.close()
+  let hoveredButton = null
 
-		if (!window.closed) {
-			window.location.href = 'about:blank'
-		}
-	}
+  const menuButtons = [
+    { id: 'new-game', label: 'NOVO JOGO', action: () => trocarEstadoDoJogo('game') },
+    { id: 'how-to-play', label: 'COMO JOGAR', action: () => trocarEstadoDoJogo('ajuda') },
+    { id: 'credits', label: 'CRÉDITOS', action: () => trocarEstadoDoJogo('sobre') },
+  ]
 </script>
 
-<main class="menu-screen" aria-label="Menu principal Maze of Mystery II">
-	<div class="menu-overlay" aria-hidden="true"></div>
+<div class="menu-screen">
+  <div class="bg-layer">
+    <img src="/images/background.png" alt="" class="bg-image">
+    <div class="bg-overlay"></div>
+  </div>
 
-	<header class="menu-header">
-		<img class="menu-logo" src="/images/logo.png" alt="Maze of Mystery II" />
-	</header>
+  <div class="content">
+    <div class="logo-container">
+      <img src="/images/logo.png" alt="Maze of Mystery II" class="logo">
+    </div>
 
-	<section class="menu-actions" aria-label="Ações do menu">
-		<button class="menu-btn menu-btn-primary" on:click={() => trocarEstadoDoJogo('historia')}>
-			Novo Jogo
-		</button>
+    <div class="spacer"></div>
 
-		<button class="menu-btn" disabled aria-disabled="true" title="Disponível em breve">
-			Continuar
-		</button>
+    <div class="buttons">
+      {#each menuButtons as button (button.id)}
+        <button
+          class="menu-btn"
+          on:click={button.action}
+          on:mouseenter={() => hoveredButton = button.id}
+          on:mouseleave={() => hoveredButton = null}
+        >
+          <div class="btn-bg" class:active={hoveredButton === button.id}>
+            {#if hoveredButton === button.id}
+              <div class="btn-glow"></div>
+            {/if}
+            <span class="btn-text" class:active={hoveredButton === button.id}>
+              {button.label}
+            </span>
+          </div>
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+        </button>
+      {/each}
+    </div>
+  </div>
+</div>
 
-		<button class="menu-btn" on:click={() => trocarEstadoDoJogo('ajuda')}>
-			Como Jogar
-		</button>
+<style>
+  .menu-screen {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
 
-		<button class="menu-btn" on:click={() => trocarEstadoDoJogo('sobre')}>
-			Créditos
-		</button>
+  .bg-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
 
-		<button class="menu-btn menu-btn-danger" on:click={sairDoJogo}>
-			Sair
-		</button>
-	</section>
-</main>
+  .bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1) translateX(-8px);
+    transform-origin: center center;
+  }
 
+  .bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.7) 100%);
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .logo-container {
+    flex-shrink: 0;
+    padding-top: 12px;
+    padding-bottom: 6px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .logo {
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 25px rgba(34, 197, 94, 0.6));
+  }
+
+  .spacer {
+    flex-grow: 0.3;
+    min-height: 0;
+  }
+
+  .buttons {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 320px;
+    padding-bottom: 12px;
+  }
+
+  .menu-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .btn-bg {
+    position: relative;
+    padding: 8px 24px;
+    background: linear-gradient(to bottom, #78350f, #451a03);
+    border: 3px solid #b45309;
+    box-shadow: 0 0 0 2px #451a03, 0 4px 0 0 #451a03;
+    transition: all 0.15s ease;
+    image-rendering: pixelated;
+  }
+
+  .btn-bg.active {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 2px #451a03, 0 2px 0 0 #451a03;
+  }
+
+  .btn-glow {
+    position: absolute;
+    inset: 0;
+    background: rgba(34, 197, 94, 0.2);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .btn-text {
+    position: relative;
+    z-index: 10;
+    display: block;
+    text-align: center;
+    color: #fef3c7;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #000;
+    transition: color 0.15s ease;
+  }
+
+  .btn-text.active {
+    color: #86efac;
+  }
+
+  .corner {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    opacity: 0.7;
+  }
+
+  .corner.tl { top: -3px; left: -3px; }
+  .corner.tr { top: -3px; right: -3px; }
+  .corner.bl { bottom: -3px; left: -3px; }
+  .corner.br { bottom: -3px; right: -3px; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
