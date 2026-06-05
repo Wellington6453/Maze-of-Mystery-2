@@ -40,14 +40,19 @@ export async function createLevelTexture(k, mapData) {
   const floorImg = await loadImage('/assets/sprites/free_floor_TileSheet.png')
   const wallsImg = await loadImage('/assets/sprites/free_walls&doors_TileSheet.png')
 
-  // Floor: tile único (13,3) — marrom com pedras arredondadas
+  // Floor: tile único (13,3)
   const floorFrame = { x: 13 * 16, y: 3 * 16 }
 
-  // Walls: dois tiles fixos da seção Brown Wall Tiles (row 2)
-  // wall_horizontal (col 3, row 2) → pixel (48, 32) — parede larga
-  // wall_vertical   (col 1, row 2) → pixel (16, 32) — pilar estreito vertical
-  const wallHFrames = [{ x: 48, y: 32 }]
-  const wallVFrames = [{ x: 16, y: 32 }]
+  // Coordenadas corrigidas com quinas e miolo preenchido
+  const TILE_WALL_TOP          = { x: 48,  y: 32 } 
+  const TILE_WALL_BOTTOM       = { x: 48,  y: 64 } 
+  const TILE_WALL_CORNER_TL    = { x: 32,  y: 32 } 
+  const TILE_WALL_CORNER_TR    = { x: 64,  y: 32 } 
+  const TILE_WALL_CORNER_BL    = { x: 32,  y: 64 } 
+  const TILE_WALL_CORNER_BR    = { x: 64,  y: 64 } 
+  const TILE_WALL_VERTICAL_L   = { x: 32,  y: 48 } 
+  const TILE_WALL_VERTICAL_R   = { x: 64,  y: 48 } 
+  const TILE_WALL_CENTER       = { x: 48,  y: 48 } 
 
   const numChunksX = Math.ceil(cols / chunk)
   const numChunksY = Math.ceil(rows / chunk)
@@ -69,17 +74,52 @@ export async function createLevelTexture(k, mapData) {
       for (let r = startRow; r < endRow; r++) {
         for (let c = startCol; c < endCol; c++) {
           const ch = mapData[r][c]
+
+          // Desenha o chão padrão embaixo de tudo
+          ctx.drawImage(floorImg, floorFrame.x, floorFrame.y, 16, 16, (c - startCol) * ts | 0, (r - startRow) * ts | 0, ts, ts)
+
           if (ch === '#') {
-            const up = r > 0 && mapData[r - 1][c] === '#'
-            const down = r < rows - 1 && mapData[r + 1][c] === '#'
-            const left = c > 0 && mapData[r][c - 1] === '#'
+            const up    = r > 0 && mapData[r - 1][c] === '#'
+            const down  = r < rows - 1 && mapData[r + 1][c] === '#'
+            const left  = c > 0 && mapData[r][c - 1] === '#'
             const right = c < cols - 1 && mapData[r][c + 1] === '#'
-            const vertical = (up && down) || (up && !left && !right) || (down && !left && !right)
-            const horizontal = (left && right) || (left && !up && !down) || (right && !up && !down)
-            const frame = (horizontal && !vertical ? wallHFrames : wallVFrames)[0]
-            ctx.drawImage(wallsImg, frame.x, frame.y, 16, 16, (c - startCol) * ts | 0, (r - startRow) * ts | 0, ts, ts)
-          } else {
-            ctx.drawImage(floorImg, floorFrame.x, floorFrame.y, 16, 16, (c - startCol) * ts | 0, (r - startRow) * ts | 0, ts, ts)
+
+            let frame = null
+
+            // 1. Quinas Superiores e Inferiores
+            if (!up && down && !left && right) {
+              frame = TILE_WALL_CORNER_TL
+            } else if (!up && down && left && !right) {
+              frame = TILE_WALL_CORNER_TR
+            } else if (up && !down && !left && right) {
+              frame = TILE_WALL_CORNER_BL
+            } else if (up && !down && left && !right) {
+              frame = TILE_WALL_CORNER_BR
+            }
+            // 2. Bordas horizontais
+            else if (!up && down) {
+              frame = TILE_WALL_TOP
+            } else if (up && !down) {
+              frame = TILE_WALL_BOTTOM
+            }
+            // 3. Laterais verticais puras e miolo
+            else if (up && down) {
+              if (!left && right) {
+                frame = TILE_WALL_VERTICAL_L
+              } else if (left && !right) {
+                frame = TILE_WALL_VERTICAL_R
+              } else if (!left && !right) {
+                frame = TILE_WALL_VERTICAL_L
+              } else {
+                frame = TILE_WALL_CENTER // Preenche o miolo da parede dupla
+              }
+            } else {
+              frame = TILE_WALL_CENTER
+            }
+
+            if (frame) {
+              ctx.drawImage(wallsImg, frame.x, frame.y, 16, 16, (c - startCol) * ts | 0, (r - startRow) * ts | 0, ts, ts)
+            }
           }
         }
       }
