@@ -227,7 +227,7 @@ export function setupScene(k) {
                 showMessage('Preciso de algo mais forte...')
               } else {
                 inputQueue.length = 0
-                paused.set(true)
+                inBattle.set(true) // Congela o jogador, mas não abre o menu
                 startBattle(enemyObj, (won) => {
                   if (!won) {
                     gameOver.set(true); runActive.set(false)
@@ -242,7 +242,7 @@ export function setupScene(k) {
                     if (enemyObj.labelRef) k.destroy(enemyObj.labelRef)
                     k.destroy(enemyObj)
                     destroyBattleUI()
-                    paused.set(false)
+                    inBattle.set(false) // Libera o jogador ao vencer
                     if (key === 'G') {
                       moveTargetCell = null
                       inputQueue.length = 0
