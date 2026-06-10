@@ -1,3 +1,7 @@
+<svelte:head>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap&family=VT323&display=swap" rel="stylesheet">
+</svelte:head>
+
 <script>
   import { trocarEstadoDoJogo } from './Estado.js'
 </script>
@@ -19,44 +23,50 @@
 
 <style>
   button.historia {
-    font-family: 'times new roman';
+    font-family: 'Press Start 2P', cursive;
     font-weight: bold;
     color: #0a0909;
-    font-size: 19px;
+    font-size: 12px;
     text-shadow: 1px 2px 1px #C5E8ED;
-    padding: 15px 70px;
-    border-radius: 40px;
+    padding: 14px 50px;
+    border-radius: 12px;
     border: 5px solid #000000;
     background: #FFDC4F;
     background: linear-gradient(to top, #f0b30d, #e8eb5a);
-    margin: 35px;
+    margin: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 1px;
+    line-height: 1.5;
   }
 
   button.historia:hover {
     color: #000000;
     background: #C2EDF2;
     background: linear-gradient(to top, #C2EDF2, #D6EDEE);
-    cursor: pointer;
   }
 
   p {
-    font-family: zelda;
-    font-size: 30px;
-    color: #eed278;
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    color: rgba(254, 243, 199, 0.9);
+    text-shadow: 1px 1px 0 #000;
+    line-height: 1.4;
+    text-align: left;
   }
 
   .texto-hist {
-    margin: 75px;
-    background-color: #1D3825;
+    margin: 20px auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 3px solid #d4b878;
+    box-shadow: 0 0 15px rgba(63, 201, 168, 0.2);
     justify-content: center;
-    max-width: 980px;
+    max-width: 800px;
     max-height: 400px;
-    padding: 30px;
+    padding: 20px;
     height: 400px;
     position: relative;
     overflow-y: scroll;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .texto-hist::-webkit-scrollbar {
@@ -64,15 +74,15 @@
   }
 
   .texto-hist::-webkit-scrollbar-track {
-    background-color: #dbd5d5;
+    background-color: rgba(0, 0, 0, 0.3);
   }
 
   .texto-hist::-webkit-scrollbar-thumb {
-    background-color: #eed278;
+    background-color: #d4b878;
     border-radius: 4px;
   }
 
   .texto-hist::-webkit-scrollbar-thumb:hover {
-    background-color: #1D3825;
+    background-color: #3fc9a8;
   }
 </style>

@@ -1,5 +1,5 @@
 <svelte:head>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap&family=VT323&display=swap" rel="stylesheet">
 </svelte:head>
 
 <script>
@@ -39,10 +39,6 @@
             <div class="back-glow"></div>
             <span class="back-label">VOLTAR</span>
           </div>
-          <div class="corner tl"></div>
-          <div class="corner tr"></div>
-          <div class="corner bl"></div>
-          <div class="corner br"></div>
         </button>
       </div>
     </div>
@@ -98,7 +94,7 @@
   .title {
     text-align: center;
     color: #fef3c7;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     font-family: 'Press Start 2P', cursive;
     font-size: 16px;
     line-height: 1.4;
@@ -109,17 +105,17 @@
   .card {
     background: rgba(0,0,0,0.6);
     border: 3px solid #b45309;
-    padding: 20px;
-    margin-bottom: 24px;
+    padding: 12px;
+    margin-bottom: 12px;
     box-shadow: 0 0 0 2px #451a03;
   }
 
   .text {
     color: rgba(254, 243, 199, 0.9);
-    margin-bottom: 24px;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 8px;
-    line-height: 1.6;
+    margin-bottom: 12px;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    line-height: 1.4;
     text-shadow: 1px 1px 0 #000;
     text-align: center;
   }
@@ -133,26 +129,26 @@
   }
 
   .link {
-    color: #86efac;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 8px;
-    line-height: 1.6;
+    color: #3fc9a8;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    line-height: 1.4;
     text-shadow: 1px 1px 0 #000;
     text-decoration: none;
     transition: color 0.15s ease;
   }
 
   .link:hover {
-    color: #fef3c7;
+    color: #d4b878;
     text-decoration: underline;
   }
 
   .thanks {
     text-align: center;
-    color: #fde68a;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 9px;
-    line-height: 1.6;
+    color: #d4b878;
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    line-height: 1.4;
     text-shadow: 1px 1px 0 #000;
     margin-bottom: 0;
   }
@@ -174,9 +170,10 @@
 
   .back-bg {
     position: relative;
-    padding: 8px 32px;
+    padding: 10px 36px;
     background: linear-gradient(to bottom, #78350f, #451a03);
     border: 3px solid #b45309;
+    border-radius: 12px;
     box-shadow: 0 0 0 2px #451a03, 0 4px 0 0 #451a03;
     transition: all 0.15s ease;
     image-rendering: pixelated;
@@ -217,19 +214,6 @@
   .back-btn:hover .back-label {
     color: #86efac;
   }
-
-  .corner {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: #22c55e;
-    opacity: 0.7;
-  }
-
-  .corner.tl { top: -3px; left: -3px; }
-  .corner.tr { top: -3px; right: -3px; }
-  .corner.bl { bottom: -3px; left: -3px; }
-  .corner.br { bottom: -3px; right: -3px; }
 
   @keyframes pulse {
     0%, 100% { opacity: 1; }

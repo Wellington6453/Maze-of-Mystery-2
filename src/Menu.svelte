@@ -1,5 +1,5 @@
 <svelte:head>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap&family=VT323&display=swap" rel="stylesheet">
 </svelte:head>
 
 <script>
@@ -43,10 +43,6 @@
               {button.label}
             </span>
           </div>
-          <div class="corner tl"></div>
-          <div class="corner tr"></div>
-          <div class="corner bl"></div>
-          <div class="corner br"></div>
         </button>
       {/each}
     </div>
@@ -136,9 +132,10 @@
 
   .btn-bg {
     position: relative;
-    padding: 8px 24px;
+    padding: 12px 28px;
     background: linear-gradient(to bottom, #78350f, #451a03);
     border: 3px solid #b45309;
+    border-radius: 12px;
     box-shadow: 0 0 0 2px #451a03, 0 4px 0 0 #451a03;
     transition: all 0.15s ease;
     image-rendering: pixelated;
@@ -173,19 +170,6 @@
   .btn-text.active {
     color: #86efac;
   }
-
-  .corner {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: #22c55e;
-    opacity: 0.7;
-  }
-
-  .corner.tl { top: -3px; left: -3px; }
-  .corner.tr { top: -3px; right: -3px; }
-  .corner.bl { bottom: -3px; left: -3px; }
-  .corner.br { bottom: -3px; right: -3px; }
 
   @keyframes float {
     0%, 100% { transform: translateY(0); }

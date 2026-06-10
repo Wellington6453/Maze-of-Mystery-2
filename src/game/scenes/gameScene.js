@@ -15,6 +15,9 @@ import { handleItemPickup, applyEquipmentBonuses } from '../entities/items.js'
 import { startBattle } from '../battle/battleManager.js'
 import { createBattleUI, destroyBattleUI } from '../battle/battleUI.js'
 import { loadMetaProgress, saveMetaProgress } from '../saveManager.js'
+import { togglePause } from '../ui/pauseMenu.js'
+import { showGameOver } from '../ui/gameOverUI.js'
+import { trocarEstadoDoJogo } from '../../Estado.js'
 
 let timerInterval = null
 export const inputCtrl = { push: null, release: null }
@@ -124,43 +127,123 @@ export function setupScene(k) {
           const m = get(metaProgress)
           m.totalRuns++
           saveMetaProgress(m)
-          k.wait(2, () => k.go('cavern'))
+          showGameOver(k)
           return 0
         }
         return t - 1
       })
     }, 1000)
 
+    // ── HUD ──────────────────────────────────────────────────────
     function createHUD() {
+      const hpFrame = k.add([
+        k.sprite('mold'),
+        k.scale(3),
+        k.pos(10, 20),
+        k.fixed(), k.z(89), 'hud-hp-bg',
+      ])
+
+      const hpFill = k.add([
+        k.sprite('bar'),
+        k.scale(3),
+        k.pos(69, 50),
+        k.fixed(), k.z(88), 'hud-hp-fill',
+      ])
+
       const hpText = k.add([
-        k.text('HP: 30/30', { size: 24 }), k.pos(12, 12),
-        k.color(255, 80, 80), k.fixed(), k.z(90), 'hud-hp',
+        k.text('HP: 30/30', { size: 16, font: 'forwa' }),
+        k.pos(10, 20),
+        k.anchor('left'),
+        k.color(255, 255, 255), k.fixed(), k.z(91), 'hud-hp',
       ])
+
       const timeText = k.add([
-        k.text('0:00', { size: 24 }),
-        k.pos(k.width() - 12, 12), k.anchor('topright'),
-        k.color(200, 200, 255), k.fixed(), k.z(90), 'hud-time',
+        k.text('0:00', { size: 48 }),
+        k.pos(k.width() / 2, 40),
+        k.anchor('center'),
+        k.color(212, 184, 120), k.fixed(), k.z(90), 'hud-time',
       ])
+
       const invText = k.add([
-        k.text('', { size: 18 }), k.pos(12, 40),
+        k.text('', { size: 16 }),
+        k.pos(14, 75),
         k.color(200, 200, 180), k.fixed(), k.z(90), 'hud-inv',
       ])
+
       const eqText = k.add([
-        k.text('', { size: 18 }), k.pos(12, 64),
+        k.text('', { size: 16 }),
+        k.pos(14, 99),
         k.color(180, 200, 180), k.fixed(), k.z(90), 'hud-eq',
       ])
+
       k.onUpdate(() => {
         if (!getPlayer()) return
-        hpText.text = `HP: ${get(playerHP)}/${get(maxHP)}`
+        const hp = get(playerHP)
+        const mhp = get(maxHP)
+        const ratio = Math.max(0, hp / mhp)
+        hpFill.scale.x = ratio * 3
+        if (ratio > 0.5) {
+          hpFill.color = k.Color.fromHex('#50c850')
+        } else if (ratio > 0.25) {
+          hpFill.color = k.Color.fromHex('#c89632')
+        } else {
+          hpFill.color = k.Color.fromHex('#ff3232')
+        }
+        hpText.text = `HP: ${hp}/${mhp}`
         const t = get(runTime)
         timeText.text = `${Math.floor(t / 60)}:${(t % 60).toString().padStart(2, '0')}`
-        invText.text = `Pedras:${get(rocksCount)}  Água:${get(waterCount)}`
+        invText.text = `\u25C6 Pedras:${get(rocksCount)}  \u2668 Água:${get(waterCount)}`
         const eq = get(metaProgress).ownedEquipment
-        eqText.text = eq.length > 0 ? eq.join(' ') : ''
+        eqText.text = eq.length > 0 ? eq.join('  ') : ''
       })
     }
     createHUD()
 
+    // ── Pause button ─────────────────────────────────────────────
+    k.add([
+      k.sprite('pause-btn'),
+      k.scale(1.5),
+      k.pos(k.width() - 40, 40),
+      k.fixed(),
+      k.area(),
+      k.anchor('center'),
+      k.z(90),
+      'pause-btn',
+    ])
+
+    // ── ESC / P pause toggling ───────────────────────────────────
+    k.onKeyPress('escape', () => {
+      if (get(gameOver) || get(gameWon)) return
+      togglePause(k)
+    })
+    k.onKeyPress('p', () => {
+      if (get(gameOver) || get(gameWon)) return
+      togglePause(k)
+    })
+    k.onClick('pause-btn', () => {
+      if (get(gameOver) || get(gameWon)) return
+      togglePause(k)
+    })
+
+    // ── Pause-menu button handlers ───────────────────────────────
+    k.onClick('resumeButton', (btn) => {
+      btn.frame = 1
+      k.wait(0.1, () => togglePause(k))
+    })
+    k.onClick('restartButton', (btn) => {
+      btn.frame = 1
+      k.wait(0.1, () => k.go('cavern'))
+    })
+    k.onClick('exitButton', (btn) => {
+      btn.frame = 1
+      k.wait(0.1, () => {
+        paused.set(false)
+        runActive.set(false)
+        trocarEstadoDoJogo('menu')
+      })
+    })
+
+    // ── Fog of war ───────────────────────────────────────────────
     const revealed = new Set()
     const fogPool = new Map()
 
@@ -227,22 +310,21 @@ export function setupScene(k) {
                 showMessage('Preciso de algo mais forte...')
               } else {
                 inputQueue.length = 0
-                inBattle.set(true) // Congela o jogador, mas não abre o menu
+                inBattle.set(true)
                 startBattle(enemyObj, (won) => {
                   if (!won) {
+                    destroyBattleUI()
                     gameOver.set(true); runActive.set(false)
                     const m = get(metaProgress)
                     m.totalRuns++
                     m.totalEnemiesKilled = (m.totalEnemiesKilled || 0) + get(enemiesKilled)
                     saveMetaProgress(m)
-                    k.add([k.text('Derrota!', { size: 48 }), k.pos(k.width()/2, k.height()/2),
-                      k.anchor('center'), k.color(255, 80, 80), k.z(200), k.fixed()])
-                    k.wait(3, () => k.go('cavern'))
+                    showGameOver(k)
                   } else {
                     if (enemyObj.labelRef) k.destroy(enemyObj.labelRef)
                     k.destroy(enemyObj)
                     destroyBattleUI()
-                    inBattle.set(false) // Libera o jogador ao vencer
+                    inBattle.set(false)
                     if (key === 'G') {
                       moveTargetCell = null
                       inputQueue.length = 0
@@ -257,7 +339,7 @@ export function setupScene(k) {
           } else if (cell === 'E' && !get(gameWon) && !get(gameOver)) {
             checkExitTile()
           }
-          const itemChars =         { t: 1, p: 1, w: 1, S: 1, '1': 1, '2': 1, '4': 1 }
+          const itemChars = { t: 1, p: 1, w: 1, S: 1, '1': 1, '2': 1, '4': 1 }
           if (itemChars[cell] && !get(inBattle)) {
             const itemObj = k.get('item').find(e => {
               const ec = Math.floor(e.pos.x / TILE_SIZE)
@@ -292,6 +374,11 @@ export function setupScene(k) {
         const fk = `${gPos.x},${gPos.y}`
         if (fk !== lastFogKey) { lastFogKey = fk; updateFog(); checkExitTile() }
       }
+    })
+
+    // ── Cleanup on scene re-enter ────────────────────────────────
+    k.on('sceneLeave', () => {
+      if (timerInterval) clearInterval(timerInterval)
     })
   })
 }
