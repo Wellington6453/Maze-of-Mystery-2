@@ -1,10 +1,5 @@
 import { TILE_SIZE } from '../kaplay.js'
 import { ENEMY_DEFS } from '../battle/enemyDefs.js'
-
-const ENEMY_COLORS = {
-  r: [180, 120, 80], b: [100, 80, 180], g: [60, 160, 60],
-  a: [200, 100, 50], G: [120, 120, 140],
-}
 const ENEMY_LABELS = { r: 'R', b: 'B', g: 'G', a: 'A', G: 'G' }
 const ENEMY_CHARS = { r: 1, b: 1, g: 1, a: 1, G: 1 }
 
@@ -31,7 +26,7 @@ export function spawnAll(k, mapData) {
         if (!def) continue
         const enemy = k.add([
           k.rect(TILE_SIZE - 4, TILE_SIZE - 4),
-          k.color(...ENEMY_COLORS[ch]),
+          k.color(...ENEMY_DEFS[ch].color),
           k.outline(2, k.Color.fromArray([255, 255, 255])),
           k.pos(pos),
           k.area({ width: TILE_SIZE - 4, height: TILE_SIZE - 4 }),

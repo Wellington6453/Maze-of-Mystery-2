@@ -2,3 +2,10 @@
 /public/build/
 
 .DS_Store
+
+# tlc-spec-driven skill
+/.agents/
+/.specs/
+
+# Claude
+/.claude/

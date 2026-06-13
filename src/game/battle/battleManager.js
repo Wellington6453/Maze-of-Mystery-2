@@ -36,8 +36,8 @@ export function startBattle(enemy, onEnd) {
   enemyKey = enemy.enemyKey
   enemyName = data.name
 
-  enemyHP = enemy.hp
-  enemyMaxHP = enemy.maxHp || enemy.hp
+  enemyHP = enemy.hp || data.hp
+  enemyMaxHP = enemy.maxHp || data.hp
   enemyAtk = data.atk
   enemyDef = data.def
   enemySpeed = data.speed
@@ -74,6 +74,49 @@ export function getBattleState() {
     confusionTurns,
     wetTurns,
   }
+}
+
+export function executePlayerAction(action) {
+  if (battleOver) return
+
+  const log = []
+  playerActs(action, log)
+
+  if (battleOver) {
+    finishBattle(log)
+    return
+  }
+
+  battleLog = [...battleLog, ...log]
+  currentEnemy.set({
+    name: enemyName,
+    hp: enemyHP,
+    maxHp: enemyMaxHP,
+    key: enemyKey,
+  })
+}
+
+export function executeEnemyAction() {
+  if (battleOver) return
+
+  const log = []
+  enemyActs(log)
+  updateStatuses(log)
+
+  if (battleOver) {
+    finishBattle(log)
+    return
+  }
+
+  battleLog = [...battleLog, ...log]
+  currentEnemy.set({
+    name: enemyName,
+    hp: enemyHP,
+    maxHp: enemyMaxHP,
+    key: enemyKey,
+  })
+
+  playerTurn = true
 }
 
 export function executeAction(action) {

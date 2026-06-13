@@ -120,7 +120,7 @@ export function setupScene(k) {
     })
 
     timerInterval = setInterval(() => {
-      if (get(paused) || get(gameOver) || get(gameWon)) return
+      if (get(paused) || get(gameOver) || get(gameWon) || get(inBattle)) return
       runTime.update(t => {
         if (t <= 1) {
           gameOver.set(true); runActive.set(false)
@@ -140,43 +140,50 @@ export function setupScene(k) {
         k.sprite('mold'),
         k.scale(3),
         k.pos(10, 20),
-        k.fixed(), k.z(89), 'hud-hp-bg',
+        k.fixed(), k.z(89), 'hud-hp-bg', 'hud',
       ])
 
       const hpFill = k.add([
         k.sprite('bar'),
         k.scale(3),
         k.pos(69, 50),
-        k.fixed(), k.z(88), 'hud-hp-fill',
+        k.fixed(), k.z(88), 'hud-hp-fill', 'hud',
       ])
 
       const hpText = k.add([
         k.text('HP: 30/30', { size: 16, font: 'forwa' }),
         k.pos(10, 20),
         k.anchor('left'),
-        k.color(255, 255, 255), k.fixed(), k.z(91), 'hud-hp',
+        k.color(255, 255, 255), k.fixed(), k.z(91), 'hud-hp', 'hud',
       ])
 
       const timeText = k.add([
         k.text('0:00', { size: 48 }),
         k.pos(k.width() / 2, 40),
         k.anchor('center'),
-        k.color(212, 184, 120), k.fixed(), k.z(90), 'hud-time',
+        k.color(212, 184, 120), k.fixed(), k.z(90), 'hud-time', 'hud',
       ])
 
       const invText = k.add([
         k.text('', { size: 16 }),
         k.pos(14, 75),
-        k.color(200, 200, 180), k.fixed(), k.z(90), 'hud-inv',
+        k.color(200, 200, 180), k.fixed(), k.z(90), 'hud-inv', 'hud',
       ])
 
       const eqText = k.add([
         k.text('', { size: 16 }),
         k.pos(14, 99),
-        k.color(180, 200, 180), k.fixed(), k.z(90), 'hud-eq',
+        k.color(180, 200, 180), k.fixed(), k.z(90), 'hud-eq', 'hud',
       ])
 
       k.onUpdate(() => {
+        // Hide HUD when in battle
+        const inBattleNow = get(inBattle)
+        const hudElements = k.get('hud')
+        for (const elem of hudElements) {
+          elem.hidden = inBattleNow
+        }
+
         if (!getPlayer()) return
         const hp = get(playerHP)
         const mhp = get(maxHP)
