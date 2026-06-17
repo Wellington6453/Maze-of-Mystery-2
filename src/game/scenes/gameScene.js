@@ -269,9 +269,9 @@ export function setupScene(k) {
       })
     })
     
-    // ── Fog of war ───────────────────────────────────────────────
+ // ── Fog of war ───────────────────────────────────────────────
     const revealed = new Set(get(runFogData))
-    const fogPool = new Map()
+    const fogPool = [] // Transformado em Array para reaproveitamento real
     
     function revealTiles(cx, cy, radius) {
       for (let r = cy - radius; r <= cy + radius; r++)
@@ -280,35 +280,46 @@ export function setupScene(k) {
             revealed.add(`${r},${c}`)
     }
     
-    function getFogTile(row, col) {
-      const key = `${row},${col}`
-      let tile = fogPool.get(key)
-      if (!tile) {
-        tile = k.add([k.rect(TILE_SIZE, TILE_SIZE), k.pos(col * TILE_SIZE, row * TILE_SIZE),
-          k.color(0, 0, 0, 0.85), k.z(20), 'fog-tile'])
-        fogPool.set(key, tile)
-      }
-      return tile
-    }
-    
     function updateFog() {
       const pPos = getPlayerGridPos()
       if (!pPos) return
       revealTiles(pPos.x, pPos.y, get(visionRange))
+      
       const camPos = k.camPos()
       const vl = Math.floor((camPos.x - k.width() / 2) / TILE_SIZE) - 1
       const vr = Math.floor((camPos.x + k.width() / 2) / TILE_SIZE) + 1
       const vt = Math.floor((camPos.y - k.height() / 2) / TILE_SIZE) - 1
       const vb = Math.floor((camPos.y + k.height() / 2) / TILE_SIZE) + 1
-      for (const tile of fogPool.values()) tile.hidden = true
-      for (let r = vt; r <= vb; r++)
-        for (let c = vl; c <= vr; c++)
+      
+      // Esconde todos os tiles do pool antes de reposicionar os necessários
+      for (const tile of fogPool) tile.hidden = true
+      
+      let poolIndex = 0
+      
+      for (let r = vt; r <= vb; r++) {
+        for (let c = vl; c <= vr; c++) {
           if (r >= 0 && r < ROWS && c >= 0 && c < COLS && !revealed.has(`${r},${c}`)) {
-            const fog = getFogTile(r, c)
+            let fog
+            // Pega um tile existente ou cria um novo se o pool não tiver o suficiente para a tela atual
+            if (poolIndex < fogPool.length) {
+              fog = fogPool[poolIndex]
+            } else {
+              fog = k.add([
+                k.rect(TILE_SIZE, TILE_SIZE), 
+                k.pos(0, 0),
+                k.color(0, 0, 0, 0.85), 
+                k.z(20), 
+                'fog-tile'
+              ])
+              fogPool.push(fog)
+            }
             fog.hidden = false
             fog.pos.x = c * TILE_SIZE
             fog.pos.y = r * TILE_SIZE
+            poolIndex++
           }
+        }
+      }
     }
     
     let lastFogKey = null
