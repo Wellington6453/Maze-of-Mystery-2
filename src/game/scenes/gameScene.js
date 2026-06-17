@@ -5,7 +5,8 @@ import {
   resetRunState, runActive, paused, runTime, gameOver, gameWon,
   playerHP, maxHP, hasPickaxe, hasSword, inBattle, metaProgress,
   visionRange, enemiesKilled, rocksCount, waterCount,
-  runFogData, collectedTimeItems, resetPersistentRunData
+  runFogData, collectedTimeItems, resetPersistentRunData,
+  collectedItemsPositions
 } from '../gameState.js'
 import {
   spawnPlayer, getPlayer, movePlayer, updatePlayer,
@@ -42,8 +43,19 @@ export function setupScene(k) {
     
     const COLS = CAVERN_MAP[0].length
     const ROWS = CAVERN_MAP.length
-    const chunkInfo = window.__levelChunks
     
+    // ── Filtragem do mapa: Apaga itens pegos e junta a string corretamente ──
+    const itensPegos = get(collectedItemsPositions)
+    const mapaFiltrado = CAVERN_MAP.map((linha, r) => {
+      return Array.from(linha).map((celula, c) => {
+        if (itensPegos.includes(`${r},${c}`)) {
+          return ' ' // Substitui o item coletado por chão vazio
+        }
+        return celula
+      }).join('') // Junta de volta em uma String!
+    })
+
+    const chunkInfo = window.__levelChunks
     if (chunkInfo) {
       for (let cy = 0; cy < chunkInfo.numChunksY; cy++)
         for (let cx = 0; cx < chunkInfo.numChunksX; cx++)
@@ -54,7 +66,8 @@ export function setupScene(k) {
           ])
     }
     
-    spawnAll(k, CAVERN_MAP)
+    // Passa o mapa modificado sem os itens antigos
+    spawnAll(k, mapaFiltrado)
     spawnPlayer(2, 2)
     k.camScale(1)
     runActive.set(true)
@@ -72,7 +85,8 @@ export function setupScene(k) {
       const col = Math.floor(px / TILE_SIZE)
       const row = Math.floor(py / TILE_SIZE)
       if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return false
-      const cell = CAVERN_MAP[row][col]
+      // Aqui usamos o mapaFiltrado para a colisão também bater com o visual
+      const cell = mapaFiltrado[row][col]
       if (cell === '#') return false
       if (cell === 'x' && !get(hasPickaxe)) return false
       if ((cell === 'g' || cell === 'a' || cell === 'G') && !get(hasSword)) return false
@@ -119,6 +133,11 @@ export function setupScene(k) {
     
     k.onCollide('player', 'item', (p, item) => {
       if (get(inBattle) || get(gameOver) || get(gameWon) || get(paused)) return
+      
+      const ic = Math.floor(item.pos.x / TILE_SIZE)
+      const ir = Math.floor(item.pos.y / TILE_SIZE)
+      collectedItemsPositions.update(list => [...list, `${ir},${ic}`])
+      
       handleItemPickup(item)
     })
     
@@ -229,14 +248,12 @@ export function setupScene(k) {
       k.wait(0.1, () => togglePause(k))
     })
     
-    // Botão de reiniciar (Menu de Pausa) -> Reseta Tudo
     k.onClick('restartButton', (btn) => {
       btn.frame = 1
       resetPersistentRunData()
       k.wait(0.1, () => k.go('cavern'))
     })
 
-    // Botão de Continuar (Game Over) -> Mantém Fog e Tempo
     k.onClick('continueButton', (btn) => {
       btn.frame = 1
       k.wait(0.1, () => k.go('cavern'))
@@ -306,7 +323,7 @@ export function setupScene(k) {
         const { x: mc, y: mr } = moveTargetCell
         moveTargetCell = null
         if (mr >= 0 && mr < ROWS && mc >= 0 && mc < COLS) {
-          const cell = CAVERN_MAP[mr][mc]
+          const cell = mapaFiltrado[mr][mc] // Ajustado aqui para ler do mapaFiltrado
           if ((cell === 'r' || cell === 'b' || cell === 'g' || cell === 'a' || cell === 'G') && !get(inBattle)) {
             const enemyObj = k.get('enemy').find(e => {
               const ec = Math.floor(e.pos.x / TILE_SIZE)
@@ -356,7 +373,11 @@ export function setupScene(k) {
               const er = Math.floor(e.pos.y / TILE_SIZE)
               return ec === mc && er === mr
             })
-            if (itemObj) handleItemPickup(itemObj)
+            
+            if (itemObj) {
+              collectedItemsPositions.update(list => [...list, `${mr},${mc}`])
+              handleItemPickup(itemObj)
+            }
           }
         }
       }

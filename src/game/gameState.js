@@ -31,6 +31,7 @@ export const metaProgress = writable({
 
 export const runFogData = writable([])
 export const collectedTimeItems = writable(0)
+export const collectedItemsPositions = writable([]) // Nova store adicionada
 
 export function resetRunState() {
   playerHP.set(30)
@@ -55,4 +56,5 @@ export function resetRunState() {
 export function resetPersistentRunData() {
   runFogData.set([])
   collectedTimeItems.set(0)
+  collectedItemsPositions.set([]) // Reseta o registro de itens limpos
 }
