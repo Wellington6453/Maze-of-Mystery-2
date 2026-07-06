@@ -29,6 +29,10 @@ export const metaProgress = writable({
   totalEscapes: 0,
 })
 
+export const runFogData = writable([])
+export const collectedTimeItems = writable(0)
+export const collectedItemsPositions = writable([]) // Nova store adicionada
+
 export function resetRunState() {
   playerHP.set(30)
   maxHP.set(30)
@@ -47,4 +51,10 @@ export function resetRunState() {
   currentEnemy.set(null)
   rocksCount.set(0)
   waterCount.set(0)
+}
+
+export function resetPersistentRunData() {
+  runFogData.set([])
+  collectedTimeItems.set(0)
+  collectedItemsPositions.set([]) // Reseta o registro de itens limpos
 }

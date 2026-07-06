@@ -4,7 +4,7 @@ import {
   hasSword, hasPickaxe,
   runTime, playerATK, maxHP, playerDEF, visionRange,
   rocksCount, waterCount, itemsCollected, metaProgress,
-  enemiesKilled, playerHP,
+  enemiesKilled, playerHP, collectedTimeItems
 } from '../gameState.js'
 
 export function handleItemPickup(item) {
@@ -18,6 +18,7 @@ export function handleItemPickup(item) {
       const extra = 30 + k.randi(0, 3) * 20
       runTime.update(t => t + extra)
       itemsCollected.update(n => n + 1)
+      collectedTimeItems.update(n => n + 1)
       msg = `+${extra}s`
       break
     }

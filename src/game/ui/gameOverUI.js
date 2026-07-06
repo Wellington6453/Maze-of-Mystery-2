@@ -16,7 +16,7 @@ export function showGameOver(k) {
     k.area(),
     k.pos(-32, 10),
     k.anchor('center'),
-    'restartButton',
+    'continueButton',
   ])
 
   menu.add([

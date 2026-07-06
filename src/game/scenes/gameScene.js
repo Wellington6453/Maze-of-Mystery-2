@@ -5,6 +5,8 @@ import {
   resetRunState, runActive, paused, runTime, gameOver, gameWon,
   playerHP, maxHP, hasPickaxe, hasSword, inBattle, metaProgress,
   visionRange, enemiesKilled, rocksCount, waterCount,
+  runFogData, collectedTimeItems, resetPersistentRunData,
+  collectedItemsPositions
 } from '../gameState.js'
 import {
   spawnPlayer, getPlayer, movePlayer, updatePlayer,
@@ -25,21 +27,33 @@ export const inputCtrl = { push: null, release: null }
 export function setupScene(k) {
   k.scene('cavern', () => {
     if (timerInterval) clearInterval(timerInterval)
-
     const savedMeta = loadMetaProgress()
     if (savedMeta) metaProgress.set(savedMeta)
+    
     resetRunState()
-
+    
     const meta = get(metaProgress)
-    let baseTime = 30
+    let baseTime = 30 + (get(collectedTimeItems) * 60)
+    
     if (meta.timeUpgrade) baseTime += 90
     runTime.set(baseTime)
+    
     applyEquipmentBonuses()
-
     k.setBackground(10, 10, 18)
-
+    
     const COLS = CAVERN_MAP[0].length
     const ROWS = CAVERN_MAP.length
+    
+    // ── Filtragem do mapa: Apaga itens pegos e junta a string corretamente ──
+    const itensPegos = get(collectedItemsPositions)
+    const mapaFiltrado = CAVERN_MAP.map((linha, r) => {
+      return Array.from(linha).map((celula, c) => {
+        if (itensPegos.includes(`${r},${c}`)) {
+          return ' ' // Substitui o item coletado por chão vazio
+        }
+        return celula
+      }).join('') // Junta de volta em uma String!
+    })
 
     const chunkInfo = window.__levelChunks
     if (chunkInfo) {
@@ -51,34 +65,34 @@ export function setupScene(k) {
             k.z(0),
           ])
     }
-
-    spawnAll(k, CAVERN_MAP)
-
+    
+    // Passa o mapa modificado sem os itens antigos
+    spawnAll(k, mapaFiltrado)
     spawnPlayer(2, 2)
     k.camScale(1)
     runActive.set(true)
-
+    
     const inputQueue = []
     let heldDir = null
-
     inputCtrl.push = (dx, dy) => {
       if (get(paused) || get(inBattle) || get(gameOver) || get(gameWon)) return
       heldDir = [dx, dy]
       inputQueue.push([dx, dy])
     }
     inputCtrl.release = () => { heldDir = null }
-
+    
     function isWalkable(px, py) {
       const col = Math.floor(px / TILE_SIZE)
       const row = Math.floor(py / TILE_SIZE)
       if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return false
-      const cell = CAVERN_MAP[row][col]
+      // Aqui usamos o mapaFiltrado para a colisão também bater com o visual
+      const cell = mapaFiltrado[row][col]
       if (cell === '#') return false
       if (cell === 'x' && !get(hasPickaxe)) return false
       if ((cell === 'g' || cell === 'a' || cell === 'G') && !get(hasSword)) return false
       return true
     }
-
+    
     function showMessage(text) {
       k.add([
         k.text(text, { size: 22 }),
@@ -87,12 +101,12 @@ export function setupScene(k) {
         k.z(100), k.fixed(), k.lifespan(1.8),
       ])
     }
-
+    
     let exitPos = null
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++)
         if (CAVERN_MAP[r][c] === 'E') exitPos = { x: c, y: r }
-
+        
     function checkExitTile() {
       if (get(gameWon) || get(gameOver)) return
       const pos = getPlayerGridPos()
@@ -101,6 +115,8 @@ export function setupScene(k) {
         if (!get(hasPickaxe)) { showMessage('A saída está bloqueada por pedras!'); return }
         gameWon.set(true)
         runActive.set(false)
+        resetPersistentRunData()
+        
         const m = get(metaProgress)
         m.totalRuns++; m.totalEscapes++
         if (!m.timeUpgrade) m.timeUpgrade = true
@@ -108,22 +124,29 @@ export function setupScene(k) {
         if (remaining > m.bestTime) m.bestTime = remaining
         m.totalEnemiesKilled = (m.totalEnemiesKilled || 0) + get(enemiesKilled)
         saveMetaProgress(m)
+        
         k.add([k.text('Vitória!', { size: 48 }), k.pos(k.width() / 2, k.height() / 2),
           k.anchor('center'), k.color(100, 255, 100), k.z(200), k.fixed()])
         k.wait(4, () => k.go('cavern'))
       }
     }
-
+    
     k.onCollide('player', 'item', (p, item) => {
       if (get(inBattle) || get(gameOver) || get(gameWon) || get(paused)) return
+      
+      const ic = Math.floor(item.pos.x / TILE_SIZE)
+      const ir = Math.floor(item.pos.y / TILE_SIZE)
+      collectedItemsPositions.update(list => [...list, `${ir},${ic}`])
+      
       handleItemPickup(item)
     })
-
+    
     timerInterval = setInterval(() => {
       if (get(paused) || get(gameOver) || get(gameWon) || get(inBattle)) return
       runTime.update(t => {
         if (t <= 1) {
           gameOver.set(true); runActive.set(false)
+          runFogData.set(Array.from(revealed))
           const m = get(metaProgress)
           m.totalRuns++
           saveMetaProgress(m)
@@ -133,7 +156,7 @@ export function setupScene(k) {
         return t - 1
       })
     }, 1000)
-
+    
     // ── HUD ──────────────────────────────────────────────────────
     function createHUD() {
       const hpFrame = k.add([
@@ -142,40 +165,34 @@ export function setupScene(k) {
         k.pos(10, 20),
         k.fixed(), k.z(89), 'hud-hp-bg', 'hud',
       ])
-
       const hpFill = k.add([
         k.sprite('bar'),
         k.scale(3),
         k.pos(69, 50),
         k.fixed(), k.z(88), 'hud-hp-fill', 'hud',
       ])
-
       const hpText = k.add([
         k.text('HP: 30/30', { size: 16, font: 'forwa' }),
         k.pos(10, 20),
         k.anchor('left'),
         k.color(255, 255, 255), k.fixed(), k.z(91), 'hud-hp', 'hud',
       ])
-
       const timeText = k.add([
         k.text('0:00', { size: 48 }),
         k.pos(k.width() / 2, 40),
         k.anchor('center'),
         k.color(212, 184, 120), k.fixed(), k.z(90), 'hud-time', 'hud',
       ])
-
       const invText = k.add([
         k.text('', { size: 16 }),
         k.pos(14, 75),
         k.color(200, 200, 180), k.fixed(), k.z(90), 'hud-inv', 'hud',
       ])
-
       const eqText = k.add([
         k.text('', { size: 16 }),
         k.pos(14, 99),
         k.color(180, 200, 180), k.fixed(), k.z(90), 'hud-eq', 'hud',
       ])
-
       k.onUpdate(() => {
         // Hide HUD when in battle
         const inBattleNow = get(inBattle)
@@ -205,7 +222,7 @@ export function setupScene(k) {
       })
     }
     createHUD()
-
+    
     // ── Pause button ─────────────────────────────────────────────
     k.add([
       k.sprite('pause-btn'),
@@ -217,7 +234,7 @@ export function setupScene(k) {
       k.z(90),
       'pause-btn',
     ])
-
+    
     // ── ESC / P pause toggling ───────────────────────────────────
     k.onKeyPress('escape', () => {
       if (get(gameOver) || get(gameWon)) return
@@ -231,80 +248,100 @@ export function setupScene(k) {
       if (get(gameOver) || get(gameWon)) return
       togglePause(k)
     })
-
+    
     // ── Pause-menu button handlers ───────────────────────────────
     k.onClick('resumeButton', (btn) => {
       btn.frame = 1
       k.wait(0.1, () => togglePause(k))
     })
+    
     k.onClick('restartButton', (btn) => {
+      btn.frame = 1
+      resetPersistentRunData()
+      k.wait(0.1, () => k.go('cavern'))
+    })
+
+    k.onClick('continueButton', (btn) => {
       btn.frame = 1
       k.wait(0.1, () => k.go('cavern'))
     })
+
     k.onClick('exitButton', (btn) => {
       btn.frame = 1
+      resetPersistentRunData()
       k.wait(0.1, () => {
         paused.set(false)
         runActive.set(false)
         trocarEstadoDoJogo('menu')
       })
     })
-
-    // ── Fog of war ───────────────────────────────────────────────
-    const revealed = new Set()
-    const fogPool = new Map()
-
+    
+ // ── Fog of war ───────────────────────────────────────────────
+    const revealed = new Set(get(runFogData))
+    const fogPool = [] // Transformado em Array para reaproveitamento real
+    
     function revealTiles(cx, cy, radius) {
       for (let r = cy - radius; r <= cy + radius; r++)
         for (let c = cx - radius; c <= cx + radius; c++)
           if (Math.sqrt((c - cx) ** 2 + (r - cy) ** 2) <= radius && r >= 0 && r < ROWS && c >= 0 && c < COLS)
             revealed.add(`${r},${c}`)
     }
-
-    function getFogTile(row, col) {
-      const key = `${row},${col}`
-      let tile = fogPool.get(key)
-      if (!tile) {
-        tile = k.add([k.rect(TILE_SIZE, TILE_SIZE), k.pos(col * TILE_SIZE, row * TILE_SIZE),
-          k.color(0, 0, 0, 0.85), k.z(20), 'fog-tile'])
-        fogPool.set(key, tile)
-      }
-      return tile
-    }
-
+    
     function updateFog() {
       const pPos = getPlayerGridPos()
       if (!pPos) return
       revealTiles(pPos.x, pPos.y, get(visionRange))
+      
       const camPos = k.camPos()
       const vl = Math.floor((camPos.x - k.width() / 2) / TILE_SIZE) - 1
       const vr = Math.floor((camPos.x + k.width() / 2) / TILE_SIZE) + 1
       const vt = Math.floor((camPos.y - k.height() / 2) / TILE_SIZE) - 1
       const vb = Math.floor((camPos.y + k.height() / 2) / TILE_SIZE) + 1
-      for (const tile of fogPool.values()) tile.hidden = true
-      for (let r = vt; r <= vb; r++)
-        for (let c = vl; c <= vr; c++)
+      
+      // Esconde todos os tiles do pool antes de reposicionar os necessários
+      for (const tile of fogPool) tile.hidden = true
+      
+      let poolIndex = 0
+      
+      for (let r = vt; r <= vb; r++) {
+        for (let c = vl; c <= vr; c++) {
           if (r >= 0 && r < ROWS && c >= 0 && c < COLS && !revealed.has(`${r},${c}`)) {
-            const fog = getFogTile(r, c)
+            let fog
+            // Pega um tile existente ou cria um novo se o pool não tiver o suficiente para a tela atual
+            if (poolIndex < fogPool.length) {
+              fog = fogPool[poolIndex]
+            } else {
+              fog = k.add([
+                k.rect(TILE_SIZE, TILE_SIZE), 
+                k.pos(0, 0),
+                k.color(0, 0, 0, 0.85), 
+                k.z(20), 
+                'fog-tile'
+              ])
+              fogPool.push(fog)
+            }
             fog.hidden = false
             fog.pos.x = c * TILE_SIZE
             fog.pos.y = r * TILE_SIZE
+            poolIndex++
           }
+        }
+      }
     }
-
+    
     let lastFogKey = null
     let moveTargetCell = null
-
+    
     k.onUpdate(() => {
       if (get(paused)) { updatePlayer(k.dt()); return }
       updatePlayer(k.dt())
-
+      
       // 1) Grid check: célula recém-pisada (antes de processar novo movimento)
       if (!isPlayerMoving() && moveTargetCell && !get(inBattle) && !get(gameOver) && !get(gameWon)) {
         const { x: mc, y: mr } = moveTargetCell
         moveTargetCell = null
         if (mr >= 0 && mr < ROWS && mc >= 0 && mc < COLS) {
-          const cell = CAVERN_MAP[mr][mc]
+          const cell = mapaFiltrado[mr][mc] // Ajustado aqui para ler do mapaFiltrado
           if ((cell === 'r' || cell === 'b' || cell === 'g' || cell === 'a' || cell === 'G') && !get(inBattle)) {
             const enemyObj = k.get('enemy').find(e => {
               const ec = Math.floor(e.pos.x / TILE_SIZE)
@@ -322,6 +359,7 @@ export function setupScene(k) {
                   if (!won) {
                     destroyBattleUI()
                     gameOver.set(true); runActive.set(false)
+                    runFogData.set(Array.from(revealed))
                     const m = get(metaProgress)
                     m.totalRuns++
                     m.totalEnemiesKilled = (m.totalEnemiesKilled || 0) + get(enemiesKilled)
@@ -353,15 +391,19 @@ export function setupScene(k) {
               const er = Math.floor(e.pos.y / TILE_SIZE)
               return ec === mc && er === mr
             })
-            if (itemObj) handleItemPickup(itemObj)
+            
+            if (itemObj) {
+              collectedItemsPositions.update(list => [...list, `${mr},${mc}`])
+              handleItemPickup(itemObj)
+            }
           }
         }
       }
-
+      
       // 2) Queue direção segurada
       if (!isPlayerMoving() && heldDir && inputQueue.length === 0)
         inputQueue.push(heldDir)
-
+      
       // 3) Processar próximo movimento
       if (inputQueue.length > 0 && !get(inBattle) && !get(gameOver) && !get(gameWon)) {
         const [dx, dy] = inputQueue.shift()
@@ -372,7 +414,7 @@ export function setupScene(k) {
         }
         movePlayer(dx, dy, (tx, ty) => isWalkable(tx, ty))
       }
-
+      
       // 4) Câmera e fog
       const p = getPlayer()
       if (p) {
@@ -382,7 +424,7 @@ export function setupScene(k) {
         if (fk !== lastFogKey) { lastFogKey = fk; updateFog(); checkExitTile() }
       }
     })
-
+    
     // ── Cleanup on scene re-enter ────────────────────────────────
     k.on('sceneLeave', () => {
       if (timerInterval) clearInterval(timerInterval)
