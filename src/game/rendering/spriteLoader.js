@@ -21,6 +21,19 @@ export async function loadGameSprites(k) {
 
   await k.loadSprite('heart', '/assets/sprites/heart.png')
 
+  await k.loadSprite('capacete', '/assets/sprites/armaduras/capacete.png')
+  await k.loadSprite('armadura', '/assets/sprites/armaduras/peitoral.png')
+  await k.loadSprite('botas', '/assets/sprites/armaduras/bota.png')
+
+  await k.loadSpriteAtlas('/assets/sprites/sapo-parado.png', {
+    frog: {
+      x: 0, y: 0, width: 640, height: 128, sliceX: 5, sliceY: 1,
+      anims: {
+        idle: { from: 0, to: 4, speed: 4, loop: true },
+      },
+    },
+  })
+
   // UI sprites (pause menu, buttons, etc.)
   await k.loadSpriteAtlas('/assets/sprites/ui.png', {
     'pause-btn': { x: 448, y: 32, width: 86, height: 44, sliceX: 2 },

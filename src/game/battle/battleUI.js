@@ -109,25 +109,35 @@ function renderBattleField(k, state, el) {
     k.z(52)
   ])
 
-  // Enemy visual (colored rectangle)
-  const enemyColor = ENEMY_DEFS[state.enemyKey]?.color || [120, 120, 120]
-  const enemyLabel = { r: 'R', b: 'B', g: 'G', a: 'A', G: 'G' }[state.enemyKey] || '?'
+  if (state.enemyKey === 'f') {
+    el([
+      k.sprite('frog', { anim: 'idle' }),
+      k.pos(enemyPos),
+      k.anchor('center'),
+      k.scale(0.9),
+      k.z(52),
+    ])
+  } else {
+    // Enemy visual (colored rectangle)
+    const enemyColor = ENEMY_DEFS[state.enemyKey]?.color || [120, 120, 120]
+    const enemyLabel = { r: 'R', b: 'B', g: 'G', a: 'A', G: 'G' }[state.enemyKey] || '?'
 
-  el([
-    k.rect(80, 80),
-    k.pos(enemyPos.x - 40, enemyPos.y - 40),
-    k.color(...enemyColor),
-    k.outline(2, k.Color.fromArray([255, 255, 255])),
-    k.z(52)
-  ])
+    el([
+      k.rect(80, 80),
+      k.pos(enemyPos.x - 40, enemyPos.y - 40),
+      k.color(...enemyColor),
+      k.outline(2, k.Color.fromArray([255, 255, 255])),
+      k.z(52)
+    ])
 
-  el([
-    k.text(enemyLabel, { size: 40 }),
-    k.pos(enemyPos),
-    k.anchor('center'),
-    k.color(255, 255, 255),
-    k.z(53)
-  ])
+    el([
+      k.text(enemyLabel, { size: 40 }),
+      k.pos(enemyPos),
+      k.anchor('center'),
+      k.color(255, 255, 255),
+      k.z(53)
+    ])
+  }
 
   return { kaelPos, enemyPos, kaelSprite }
 }

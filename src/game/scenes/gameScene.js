@@ -89,7 +89,7 @@ export function setupScene(k) {
       const cell = mapaFiltrado[row][col]
       if (cell === '#') return false
       if (cell === 'x' && !get(hasPickaxe)) return false
-      if ((cell === 'g' || cell === 'a' || cell === 'G') && !get(hasSword)) return false
+      if ((cell === 'g' || cell === 'a' || cell === 'G' || cell === 'f') && !get(hasSword)) return false
       return true
     }
     
@@ -98,6 +98,7 @@ export function setupScene(k) {
         k.text(text, { size: 22 }),
         k.pos(k.width() / 2, k.height() - 30),
         k.anchor('center'), k.color(255, 255, 100),
+        k.opacity(1),
         k.z(100), k.fixed(), k.lifespan(1.8),
       ])
     }
@@ -140,7 +141,7 @@ export function setupScene(k) {
       
       handleItemPickup(item)
     })
-    
+
     timerInterval = setInterval(() => {
       if (get(paused) || get(gameOver) || get(gameWon) || get(inBattle)) return
       runTime.update(t => {
@@ -232,7 +233,7 @@ export function setupScene(k) {
       k.area(),
       k.anchor('center'),
       k.z(90),
-      'pause-btn',
+      'pause-btn', 'hud',
     ])
     
     // ── ESC / P pause toggling ───────────────────────────────────
@@ -342,7 +343,7 @@ export function setupScene(k) {
         moveTargetCell = null
         if (mr >= 0 && mr < ROWS && mc >= 0 && mc < COLS) {
           const cell = mapaFiltrado[mr][mc] // Ajustado aqui para ler do mapaFiltrado
-          if ((cell === 'r' || cell === 'b' || cell === 'g' || cell === 'a' || cell === 'G') && !get(inBattle)) {
+          if ((cell === 'r' || cell === 'b' || cell === 'g' || cell === 'a' || cell === 'G' || cell === 'f') && !get(inBattle)) {
             const enemyObj = k.get('enemy').find(e => {
               const ec = Math.floor(e.pos.x / TILE_SIZE)
               const er = Math.floor(e.pos.y / TILE_SIZE)
@@ -350,7 +351,7 @@ export function setupScene(k) {
             })
             if (enemyObj) {
               const key = enemyObj.enemyKey
-              if ((key === 'g' || key === 'a' || key === 'G') && !get(hasSword)) {
+              if ((key === 'g' || key === 'a' || key === 'G' || key === 'f') && !get(hasSword)) {
                 showMessage('Preciso de algo mais forte...')
               } else {
                 inputQueue.length = 0
