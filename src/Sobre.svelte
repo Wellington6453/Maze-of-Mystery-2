@@ -28,6 +28,9 @@
           <a href="https://github.com/Wellington6453" target="_blank" rel="noopener" class="link">
             Wellington Ramos da Silva
           </a>
+          <a href="https://github.com/AnthonyRichardD" target="_blank" rel="noopener" class="link">
+            Anthony Richard Dias
+          </a>
         </div>
 
         <p class="thanks">OBRIGADA POR JOGAR!</p>

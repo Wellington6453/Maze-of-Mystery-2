@@ -4,7 +4,7 @@ import { ENEMY_DEFS } from './enemyDefs.js'
 import {
   playerHP, maxHP, playerATK, playerDEF,
   hasSword, hasPickaxe, inBattle, currentEnemy,
-  rocksCount, waterCount, enemiesKilled,
+  enemiesKilled,
 } from '../gameState.js'
 
 let enemyObj = null
@@ -22,6 +22,20 @@ let battleOver = false
 
 let confusionTurns = 0
 let wetTurns = 0
+let rockCooldown = 0
+let waterCooldown = 0
+let bleedTurns = 0
+let enemyMissTurns = 0
+
+let dodgeActive = false
+
+let enemyAction = ''
+let playerAction = ''
+let playerHit = false
+let regenTurns = 0
+let usedStrongRegen = false
+let playerAtkDebuff = 0
+let roundLog = []
 
 let onBattleEnd = null
 
@@ -42,8 +56,20 @@ export function startBattle(enemy, onEnd) {
   enemyDef = data.def
   enemySpeed = data.speed
 
+  dodgeActive = false
   confusionTurns = 0
   wetTurns = 0
+  rockCooldown = 0
+  waterCooldown = 0
+  bleedTurns = 0
+  enemyMissTurns = 0
+  enemyAction = ''
+  playerAction = ''
+  playerHit = false
+  regenTurns = 0
+  usedStrongRegen = false
+  playerAtkDebuff = 0
+  roundLog = []
   battleLog = [`Um ${enemyName} selvagem apareceu!`]
   battleOver = false
 
@@ -73,14 +99,30 @@ export function getBattleState() {
     battleOver,
     confusionTurns,
     wetTurns,
+    rockCooldown,
+    waterCooldown,
+    bleedTurns,
+    enemyMissTurns,
+    enemyAction,
+    playerAction,
+    playerHit,
+    regenTurns,
+    playerAtkDebuff,
+    roundLog,
   }
 }
 
 export function executePlayerAction(action) {
   if (battleOver) return
 
+  playerAction = action
+  playerHit = false
+  enemyAction = ''
+  roundLog = []
+
   const log = []
   playerActs(action, log)
+  roundLog.push(...log)
 
   if (battleOver) {
     finishBattle(log)
@@ -99,9 +141,14 @@ export function executePlayerAction(action) {
 export function executeEnemyAction() {
   if (battleOver) return
 
+  enemyAction = ''
+  playerAction = ''
+  playerHit = false
+
   const log = []
   enemyActs(log)
   updateStatuses(log)
+  roundLog.push(...log)
 
   if (battleOver) {
     finishBattle(log)
@@ -117,37 +164,6 @@ export function executeEnemyAction() {
   })
 
   playerTurn = true
-}
-
-export function executeAction(action) {
-  if (battleOver) return
-
-  const k = getK()
-  const log = []
-
-  if (!playerTurn) {
-    enemyActs(log)
-    if (battleOver) return finishBattle(log)
-    playerActs(action, log)
-  } else {
-    playerActs(action, log)
-    if (battleOver) return finishBattle(log)
-    enemyActs(log)
-  }
-
-  updateStatuses(log)
-
-  if (battleOver) return finishBattle(log)
-
-  battleLog = log
-  currentEnemy.set({
-    name: enemyName,
-    hp: enemyHP,
-    maxHp: enemyMaxHP,
-    key: enemyKey,
-  })
-
-  playerTurn = !playerTurn
 }
 
 function playerActs(action, log) {
@@ -172,69 +188,65 @@ function playerActs(action, log) {
 }
 
 function playerAttack(log) {
-  if (enemyKey !== 'r' && enemyKey !== 'b' && !get(hasSword)) {
+  if (!get(hasSword)) {
     log.push('Preciso de algo mais forte!')
     return
   }
 
   let dmg = get(playerATK) - enemyDef
+  if (playerAtkDebuff > 0) {
+    dmg = Math.floor(dmg * 0.7)
+  }
   dmg = Math.max(1, dmg)
 
-  if (wetTurns > 0 && enemyKey === 'G') {
-    dmg = Math.floor(dmg * 1.5)
-    log.push('Golem molhado! Dano +50%!')
-  }
-
   enemyHP -= dmg
-  log.push(`Você ataca! ${dmg} de dano.`)
+  log.push(`Thomas usou Ataque! Causou ${dmg} de dano.`)
+  if (playerAtkDebuff > 0) {
+    log.push('ATK reduzido pelo jato d\'água!')
+  }
+  enemyAction = 'hit'
 }
 
 function playerDodge(log) {
-  log.push('Você se prepara para esquivar...')
+  dodgeActive = true
+  log.push('Thomas usou Esquiva!')
 }
 
 function playerRock(log) {
-  if (get(rocksCount) <= 0) {
-    log.push('Sem pedras!')
-    return
-  }
-  rocksCount.update(n => n - 1)
-
-  if (enemyKey === 'G') {
-    log.push('Pedra ricocheteia no Golem!')
+  if (rockCooldown > 0) {
+    log.push(`Pedra recarregando... ${rockCooldown} turnos`)
     return
   }
 
-  let dmg = 3
+  rockCooldown = 3
+  bleedTurns = 3
+  enemyMissTurns = 3
+
+  let dmg = 8
   enemyHP -= dmg
-  log.push(`Pedra atinge! ${dmg} de dano.`)
-
-  if (Math.random() < 0.4) {
-    confusionTurns = 2
-    log.push(`${enemyName} está confuso!`)
-  }
+  log.push(`Thomas usou Pedra! ${dmg} de dano. Sangramento!`)
+  enemyAction = 'hit'
 }
 
 function playerWater(log) {
-  if (get(waterCount) <= 0) {
-    log.push('Sem água!')
+  if (waterCooldown > 0) {
+    log.push(`Água recarregando... ${waterCooldown} turnos`)
     return
   }
-  waterCount.update(n => n - 1)
 
+  waterCooldown = 3
   wetTurns = 3
-
-  if (enemyKey === 'b') {
-    log.push('Morcego cai no chão! Perdeu vantagem aérea!')
-  } else if (enemyKey === 'G') {
-    log.push('Golem encharcado! Receberá +50% de dano!')
-  } else {
-    log.push(`${enemyName} está molhado! ATK reduzido!`)
-  }
+  log.push(`Thomas usou Água! ${enemyName} molhado! ATK reduzido!`)
 }
 
 function enemyActs(log) {
   if (battleOver) return
+
+  if (dodgeActive) {
+    log.push(`${enemyName} errou o ataque!`)
+    dodgeActive = false
+    return
+  }
 
   if (confusionTurns > 0 && Math.random() < 0.5) {
     log.push(`${enemyName} está confuso e erra o ataque!`)
@@ -245,21 +257,87 @@ function enemyActs(log) {
     const selfDmg = Math.max(1, Math.floor(enemyAtk * 0.3))
     enemyHP -= selfDmg
     log.push(`${enemyName} se machuca na confusão! ${selfDmg} de dano.`)
+    enemyAction = 'hit'
+    if (enemyHP <= 0) {
+      enemyHP = 0
+      battleOver = true
+      log.push(`${enemyName} foi derrotado!`)
+    }
     return
   }
 
-  let atk = enemyAtk
-  if (wetTurns > 0 && enemyKey !== 'G') {
-    atk = Math.floor(atk * 0.5)
-    log.push(`${enemyName} está molhado! ATK reduzido!`)
+  if (enemyMissTurns > 0 && Math.random() < 0.2) {
+    log.push(`${enemyName} tenta atacar mas falha devido ao ferimento!`)
+    return
   }
 
-  const defPct = get(playerDEF)
-  let dmg = atk - Math.floor(atk * defPct / 100)
-  dmg = Math.max(1, dmg)
+  // --- Action selection ---
+  const hpRatio = enemyHP / enemyMaxHP
+  let chosenAction = 'attack'
 
-  playerHP.update(hp => hp - dmg)
-  log.push(`${enemyName} ataca! ${dmg} de dano.`)
+  if (!usedStrongRegen && hpRatio <= 0.5) {
+    chosenAction = 'strong-regen'
+  } else {
+    const roll = Math.random()
+    if (roll < 0.6) {
+      chosenAction = 'attack'
+    } else if (roll < 0.85) {
+      chosenAction = 'jato'
+    } else {
+      chosenAction = 'regen'
+    }
+  }
+
+  switch (chosenAction) {
+    case 'strong-regen':
+      usedStrongRegen = true
+      const healAmount = 50
+      const actualHeal = Math.min(healAmount, enemyMaxHP - enemyHP)
+      enemyHP += actualHeal
+      enemyAction = 'regen'
+      log.push(`${enemyName} usou Regeneração Poderosa! +${actualHeal} HP!`)
+      break
+
+    case 'attack': {
+      let atk = enemyAtk
+      if (wetTurns > 0) {
+        atk = Math.floor(atk * 0.5)
+      }
+      const defPct = get(playerDEF)
+      let dmg = atk - Math.floor(atk * defPct / 100)
+      dmg = Math.max(1, dmg)
+      playerHP.update(hp => hp - dmg)
+      playerHit = true
+      log.push(`${enemyName} usou Ataque! Causou ${dmg} de dano.`)
+      if (wetTurns > 0) {
+        log.push(`${enemyName} molhado! ATK reduzido!`)
+      }
+      enemyAction = 'attack'
+      break
+    }
+
+    case 'jato': {
+      playerAtkDebuff = 2
+      let atk = Math.floor(enemyAtk * 0.8)
+      if (wetTurns > 0) {
+        atk = Math.floor(atk * 0.5)
+      }
+      const defPct = get(playerDEF)
+      let dmg = atk - Math.floor(atk * defPct / 100)
+      dmg = Math.max(1, dmg)
+      playerHP.update(hp => hp - dmg)
+      playerHit = true
+      log.push(`${enemyName} usou Jato d'água! Causou ${dmg} de dano!`)
+      enemyAction = 'jato'
+      break
+    }
+
+    case 'regen':
+      regenTurns = 3
+      enemyAction = 'regen'
+      log.push(`${enemyName} usou Regeneração!`)
+      break
+  }
 
   if (get(playerHP) <= 0) {
     playerHP.set(0)
@@ -269,11 +347,31 @@ function enemyActs(log) {
 }
 
 function updateStatuses(log) {
-  if (confusionTurns > 0) {
-    confusionTurns--
+  if (confusionTurns > 0) confusionTurns--
+  if (wetTurns > 0) wetTurns--
+  if (rockCooldown > 0) rockCooldown--
+  if (waterCooldown > 0) waterCooldown--
+  if (enemyMissTurns > 0) enemyMissTurns--
+  if (playerAtkDebuff > 0) playerAtkDebuff--
+
+  if (bleedTurns > 0) {
+    const bleedDmg = Math.floor(enemyMaxHP * 0.08)
+    enemyHP -= bleedDmg
+    log.push(`Sangramento causa ${bleedDmg} de dano!`)
+    bleedTurns--
+    if (bleedTurns === 0) {
+      log.push(`O sangramento de ${enemyName} acabou.`)
+    }
   }
-  if (wetTurns > 0) {
-    wetTurns--
+
+  if (regenTurns > 0) {
+    const heal = Math.max(1, Math.floor(enemyMaxHP * 0.03))
+    enemyHP = Math.min(enemyMaxHP, enemyHP + heal)
+    log.push(`${enemyName} regenera ${heal} de HP!`)
+    regenTurns--
+    if (regenTurns === 0) {
+      log.push(`A regeneração de ${enemyName} acabou.`)
+    }
   }
 
   if (enemyHP <= 0) {
@@ -299,9 +397,9 @@ export function endBattle(won) {
   if (won) {
     enemiesKilled.update(n => n + 1)
 
-    if (enemyKey === 'G') {
+    if (enemyKey === 'f') {
       hasPickaxe.set(true)
-      battleLog.push('Golem derrotado! Picareta Antiga adquirida!')
+      battleLog.push('Rei Sapo derrotado! Picareta Antiga adquirida!')
     }
   }
 

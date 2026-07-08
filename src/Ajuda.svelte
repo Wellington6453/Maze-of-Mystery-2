@@ -79,31 +79,35 @@
         {/if}
 
         {#if activeTab === 'sobre'}
-          <h3 class="subsubtitle green">Explore</h3>
-          <p class="text">Ao longo da jornada você encontrará:</p>
+          <h3 class="subsubtitle green">Equipamentos</h3>
+          <p class="text">Espalhados pela caverna, você encontra equipamentos que aumentam seus atributos:</p>
           <div class="list">
             {#each [
-              'Equipamentos esquecidos',
-              'Recursos que podem ajudar em futuras explorações',
-              'Tesouros escondidos',
-              'Novos caminhos e atalhos',
+              'Espada — necessária para enfrentar o Sapo',
+              'Capacete — +25 de HP máximo',
+              'Armadura — +50 de HP máximo',
+              'Botas — +25 de HP máximo',
             ] as item}
               <p class="list-item"><span class="bullet">•</span> {item}</p>
             {/each}
           </div>
-          <h3 class="subsubtitle red">Sobreviva</h3>
-          <p class="text">Nem todos os habitantes da caverna gostam de visitantes. Prepare-se para enfrentar:</p>
+          <h3 class="subsubtitle green">Itens de Tempo</h3>
+          <p class="text">Garrafas de tempo adicionam segundos extras ao cronômetro. Cada uma vale entre 30s e 90s.</p>
+          <h3 class="subsubtitle red">Combate</h3>
+          <p class="text">O Sapo guarda a caverna. Para enfrentá-lo, você precisa da Espada.</p>
+          <h3 class="subsubtitle">Habilidades:</h3>
           <div class="list">
             {#each [
-              'Ratos Gigantes',
-              'Morcegos das Cavernas',
-              'Goblins',
-              'Goblins Arqueiros',
-              'Uma criatura ancestral que guarda a chave para sua liberdade...',
-            ] as enemy}
-              <p class="list-item"><span class="bullet">•</span> {enemy}</p>
+              'Atacar — ataque básico baseado no seu ATK',
+              'Esquivar — desvia do próximo ataque (recarga: 2 turnos)',
+              'Pedra — 8 de dano + sangramento por 3 turnos (recarga: 3)',
+              'Água — reduz o ATK do inimigo por 3 turnos (recarga: 3)',
+            ] as skill}
+              <p class="list-item"><span class="bullet">•</span> {skill}</p>
             {/each}
           </div>
+          <h3 class="subsubtitle red">Atenção</h3>
+          <p class="text">O tempo é limitado. Quando o cronômetro chegar a 3 segundos a caverna começa a tremer. Se o tempo acabar, o desmoronamento te pega.</p>
         {/if}
       </div>
 

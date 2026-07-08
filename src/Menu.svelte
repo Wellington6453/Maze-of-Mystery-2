@@ -8,7 +8,7 @@
   let hoveredButton = null
 
   const menuButtons = [
-    { id: 'new-game', label: 'NOVO JOGO', action: () => trocarEstadoDoJogo('game') },
+    { id: 'new-game', label: 'NOVO JOGO', action: () => trocarEstadoDoJogo('historia') },
     { id: 'how-to-play', label: 'COMO JOGAR', action: () => trocarEstadoDoJogo('ajuda') },
     { id: 'credits', label: 'CRÉDITOS', action: () => trocarEstadoDoJogo('sobre') },
   ]

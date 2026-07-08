@@ -3,8 +3,9 @@ import { getK, TILE_SIZE } from '../kaplay.js'
 import {
   hasSword, hasPickaxe,
   runTime, playerATK, maxHP, playerDEF, visionRange,
-  rocksCount, waterCount, itemsCollected, metaProgress,
-  enemiesKilled, playerHP, collectedTimeItems
+  itemsCollected, metaProgress,
+  enemiesKilled, playerHP, collectedTimeItems,
+  collectedChecklistItems
 } from '../gameState.js'
 
 export function handleItemPickup(item) {
@@ -22,23 +23,10 @@ export function handleItemPickup(item) {
       msg = `+${extra}s`
       break
     }
-    case 'pedra': {
-      rocksCount.update(n => n + 1)
-      itemsCollected.update(n => n + 1)
-      msg = '+1 Pedra'
-      break
-    }
-    case 'agua': {
-      waterCount.update(n => n + 1)
-      itemsCollected.update(n => n + 1)
-      msg = '+1 Água'
-      break
-    }
     case 'espada': {
       hasSword.set(true)
       playerATK.set(15)
       itemsCollected.update(n => n + 1)
-      msg = 'Espada Enferrujada! ATK 15'
       break
     }
     case 'capacete': {
@@ -49,7 +37,6 @@ export function handleItemPickup(item) {
       }
       applyEquipmentBonuses()
       itemsCollected.update(n => n + 1)
-      msg = 'Capacete! HP+10 DEF+5%'
       break
     }
     case 'armadura': {
@@ -60,7 +47,6 @@ export function handleItemPickup(item) {
       }
       applyEquipmentBonuses()
       itemsCollected.update(n => n + 1)
-      msg = 'Armadura! HP+30 DEF+20%'
       break
     }
     case 'botas': {
@@ -71,13 +57,24 @@ export function handleItemPickup(item) {
       }
       applyEquipmentBonuses()
       itemsCollected.update(n => n + 1)
-      msg = 'Botas! HP+20 DEF+15%'
       break
     }
   }
 
   k.destroy(item)
-  showPickupMessage(msg)
+
+  if (key === 'tempo') {
+    showPickupMessage(msg)
+  }
+
+  const checklistKeys = ['espada', 'capacete', 'armadura', 'botas']
+  if (checklistKeys.includes(key)) {
+    const current = get(collectedChecklistItems)
+    if (!current.includes(key)) {
+      const updated = [...current, key]
+      collectedChecklistItems.set(updated)
+    }
+  }
 }
 
 export function applyEquipmentBonuses() {
@@ -88,15 +85,15 @@ export function applyEquipmentBonuses() {
   let bonusDef = 0
 
   if (equip.includes('capacete')) {
-    bonusHP += 10
+    bonusHP += 25
     bonusDef += 5
   }
   if (equip.includes('armadura')) {
-    bonusHP += 30
+    bonusHP += 50
     bonusDef += 20
   }
   if (equip.includes('botas')) {
-    bonusHP += 20
+    bonusHP += 25
     bonusDef += 15
   }
 
@@ -106,8 +103,8 @@ export function applyEquipmentBonuses() {
 
   bonusDef = Math.min(bonusDef, 40)
 
-  maxHP.set(30 + bonusHP)
-  playerHP.set(30 + bonusHP)
+  maxHP.set(50 + bonusHP)
+  playerHP.set(50 + bonusHP)
   playerDEF.set(bonusDef)
 
   if (equip.includes('capacete')) {

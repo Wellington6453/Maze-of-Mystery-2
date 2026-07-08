@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store'
 
 export const playerHP = writable(30)
-export const maxHP = writable(30)
+export const maxHP = writable(50)
 export const playerATK = writable(5)
 export const playerDEF = writable(0)
 export const visionRange = writable(3)
@@ -31,11 +31,12 @@ export const metaProgress = writable({
 
 export const runFogData = writable([])
 export const collectedTimeItems = writable(0)
-export const collectedItemsPositions = writable([]) // Nova store adicionada
+export const collectedItemsPositions = writable([])
+export const collectedChecklistItems = writable([])
 
 export function resetRunState() {
-  playerHP.set(30)
-  maxHP.set(30)
+  playerHP.set(50)
+  maxHP.set(50)
   playerATK.set(5)
   playerDEF.set(0)
   visionRange.set(3)
@@ -51,10 +52,12 @@ export function resetRunState() {
   currentEnemy.set(null)
   rocksCount.set(0)
   waterCount.set(0)
+  collectedItemsPositions.set([])
+  collectedChecklistItems.set([])
+  metaProgress.update(m => ({ ...m, ownedEquipment: [] }))
 }
 
 export function resetPersistentRunData() {
   runFogData.set([])
   collectedTimeItems.set(0)
-  collectedItemsPositions.set([]) // Reseta o registro de itens limpos
 }

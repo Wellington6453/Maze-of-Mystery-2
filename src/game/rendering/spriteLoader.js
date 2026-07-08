@@ -11,9 +11,9 @@ export async function loadGameSprites(k) {
         'run-down':    { from: 18, to: 23, speed: 13, loop: true },
         'run-right':   { from: 24, to: 29, speed: 13, loop: true },
         'run-up':      { from: 30, to: 35, speed: 13, loop: true },
-        'attack-down': { from: 36, to: 39, speed: 5,  loop: true },
-        'attack-right':{ from: 42, to: 45, speed: 5,  loop: true },
-        'attack-up':   { from: 48, to: 51, speed: 5,  loop: true },
+        'attack-down': { from: 36, to: 39, speed: 5,  loop: false },
+        'attack-right':{ from: 42, to: 45, speed: 5,  loop: false },
+        'attack-up':   { from: 48, to: 51, speed: 5,  loop: false },
         'dead':        { from: 54, to: 57, speed: 3,  loop: false },
       },
     },
@@ -31,6 +31,30 @@ export async function loadGameSprites(k) {
       anims: {
         idle: { from: 0, to: 4, speed: 4, loop: true },
       },
+    },
+  })
+
+  await k.loadSpriteAtlas('/assets/sprites/sapo-attack.png', {
+    'frog-attack': {
+      x: 0, y: 0, width: 3072, height: 128, sliceX: 24, sliceY: 1,
+    },
+  })
+
+  await k.loadSpriteAtlas('/assets/sprites/sapo-jato.png', {
+    'frog-jato': {
+      x: 0, y: 0, width: 4224, height: 128, sliceX: 33, sliceY: 1,
+    },
+  })
+
+  await k.loadSpriteAtlas('/assets/sprites/sapo-regen.png', {
+    'frog-regen': {
+      x: 0, y: 0, width: 6528, height: 128, sliceX: 51, sliceY: 1,
+    },
+  })
+
+  await k.loadSpriteAtlas('/assets/sprites/sapo-tomandohit.png', {
+    'frog-hit': {
+      x: 0, y: 0, width: 1536, height: 128, sliceX: 12, sliceY: 1,
     },
   })
 
@@ -53,14 +77,19 @@ export async function loadGameSprites(k) {
     controls: { x: 176, y: 224, width: 230, height: 158 },
   })
 
+  await k.loadSprite('battle-bg', '/images/rpg_background.png')
+  await k.loadSprite('desmoronamento', '/images/Desmoronamento.png')
+
   // Health bar sprites
   await k.loadSpriteAtlas('/assets/sprites/Healthbar.png', {
     mold: { x: 1, y: 1, width: 78, height: 20 },
     bar: { x: 21, y: 27, width: 56, height: 4 },
   })
 
-  // Font
+  // Fonts
   k.loadFont('forwa', '/assets/fonts/FFFFORWA.TTF', { size: 48 })
+  k.loadFont('ubuntu', '/assets/fonts/Ubuntu-R.ttf', { size: 16 })
+  k.loadFont('vt323', '/assets/fonts/VT323-Regular.ttf', { size: 24 })
 }
 
 function loadImage(src) {

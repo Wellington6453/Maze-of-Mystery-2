@@ -4,24 +4,25 @@ import { CAVERN_MAP } from '../levels/cavernLayout.js'
 import {
   resetRunState, runActive, paused, runTime, gameOver, gameWon,
   playerHP, maxHP, hasPickaxe, hasSword, inBattle, metaProgress,
-  visionRange, enemiesKilled, rocksCount, waterCount,
+  visionRange, enemiesKilled,
   runFogData, collectedTimeItems, resetPersistentRunData,
-  collectedItemsPositions
+  collectedItemsPositions, collectedChecklistItems
 } from '../gameState.js'
 import {
   spawnPlayer, getPlayer, movePlayer, updatePlayer,
   isPlayerMoving, getPlayerGridPos,
 } from '../entities/player.js'
 import { spawnAll } from '../entities/enemySpawner.js'
-import { handleItemPickup, applyEquipmentBonuses } from '../entities/items.js'
+import { handleItemPickup } from '../entities/items.js'
 import { startBattle } from '../battle/battleManager.js'
 import { createBattleUI, destroyBattleUI } from '../battle/battleUI.js'
 import { loadMetaProgress, saveMetaProgress } from '../saveManager.js'
 import { togglePause } from '../ui/pauseMenu.js'
-import { showGameOver } from '../ui/gameOverUI.js'
+import { showGameOver, showDesmoronamento } from '../ui/gameOverUI.js'
 import { trocarEstadoDoJogo } from '../../Estado.js'
 
 let timerInterval = null
+let shakeInterval = null
 export const inputCtrl = { push: null, release: null }
 
 export function setupScene(k) {
@@ -38,7 +39,6 @@ export function setupScene(k) {
     if (meta.timeUpgrade) baseTime += 90
     runTime.set(baseTime)
     
-    applyEquipmentBonuses()
     k.setBackground(10, 10, 18)
     
     const COLS = CAVERN_MAP[0].length
@@ -89,7 +89,7 @@ export function setupScene(k) {
       const cell = mapaFiltrado[row][col]
       if (cell === '#') return false
       if (cell === 'x' && !get(hasPickaxe)) return false
-      if ((cell === 'g' || cell === 'a' || cell === 'G' || cell === 'f') && !get(hasSword)) return false
+      if (cell === 'f' && !get(hasSword)) return false
       return true
     }
     
@@ -145,13 +145,27 @@ export function setupScene(k) {
     timerInterval = setInterval(() => {
       if (get(paused) || get(gameOver) || get(gameWon) || get(inBattle)) return
       runTime.update(t => {
+        if (t <= 3 && t > 0 && !shakeInterval) {
+          shakeInterval = setInterval(() => {
+            const remaining = get(runTime)
+            if (remaining <= 0) {
+              clearInterval(shakeInterval)
+              shakeInterval = null
+              return
+            }
+            const intensity = Math.max(0.5, (4 - remaining) * 1.5)
+            k.camShake(intensity)
+          }, 300)
+        }
+
         if (t <= 1) {
           gameOver.set(true); runActive.set(false)
+          if (shakeInterval) { clearInterval(shakeInterval); shakeInterval = null }
           runFogData.set(Array.from(revealed))
           const m = get(metaProgress)
           m.totalRuns++
           saveMetaProgress(m)
-          showGameOver(k)
+          showDesmoronamento(k, () => showGameOver(k))
           return 0
         }
         return t - 1
@@ -160,66 +174,40 @@ export function setupScene(k) {
     
     // ── HUD ──────────────────────────────────────────────────────
     function createHUD() {
-      const hpFrame = k.add([
-        k.sprite('mold'),
-        k.scale(3),
-        k.pos(10, 20),
-        k.fixed(), k.z(89), 'hud-hp-bg', 'hud',
-      ])
-      const hpFill = k.add([
-        k.sprite('bar'),
-        k.scale(3),
-        k.pos(69, 50),
-        k.fixed(), k.z(88), 'hud-hp-fill', 'hud',
-      ])
-      const hpText = k.add([
-        k.text('HP: 30/30', { size: 16, font: 'forwa' }),
-        k.pos(10, 20),
-        k.anchor('left'),
-        k.color(255, 255, 255), k.fixed(), k.z(91), 'hud-hp', 'hud',
-      ])
       const timeText = k.add([
         k.text('0:00', { size: 48 }),
         k.pos(k.width() / 2, 40),
         k.anchor('center'),
-        k.color(212, 184, 120), k.fixed(), k.z(90), 'hud-time', 'hud',
+        k.color(212, 184, 120), k.fixed(), k.z(90), 'hud',
       ])
-      const invText = k.add([
-        k.text('', { size: 16 }),
-        k.pos(14, 75),
-        k.color(200, 200, 180), k.fixed(), k.z(90), 'hud-inv', 'hud',
-      ])
-      const eqText = k.add([
-        k.text('', { size: 16 }),
-        k.pos(14, 99),
-        k.color(180, 200, 180), k.fixed(), k.z(90), 'hud-eq', 'hud',
+      const checklistText = k.add([
+        k.text('', { size: 20, font: 'ubuntu' }),
+        k.pos(18, 80),
+        k.color(212, 184, 120), k.fixed(), k.z(90), 'hud',
       ])
       k.onUpdate(() => {
-        // Hide HUD when in battle
         const inBattleNow = get(inBattle)
-        const hudElements = k.get('hud')
-        for (const elem of hudElements) {
-          elem.hidden = inBattleNow
-        }
+        timeText.hidden = inBattleNow
+        checklistText.hidden = inBattleNow
 
-        if (!getPlayer()) return
-        const hp = get(playerHP)
-        const mhp = get(maxHP)
-        const ratio = Math.max(0, hp / mhp)
-        hpFill.scale.x = ratio * 3
-        if (ratio > 0.5) {
-          hpFill.color = k.Color.fromHex('#50c850')
-        } else if (ratio > 0.25) {
-          hpFill.color = k.Color.fromHex('#c89632')
-        } else {
-          hpFill.color = k.Color.fromHex('#ff3232')
-        }
-        hpText.text = `HP: ${hp}/${mhp}`
         const t = get(runTime)
         timeText.text = `${Math.floor(t / 60)}:${(t % 60).toString().padStart(2, '0')}`
-        invText.text = `\u25C6 Pedras:${get(rocksCount)}  \u2668 Água:${get(waterCount)}`
-        const eq = get(metaProgress).ownedEquipment
-        eqText.text = eq.length > 0 ? eq.join('  ') : ''
+        if (t <= 3 && t > 0) {
+          timeText.color = k.Color.fromArray([200, 40, 40])
+        } else {
+          timeText.color = k.Color.fromArray([212, 184, 120])
+        }
+
+        const collected = get(collectedChecklistItems)
+        const allItems = ['espada', 'capacete', 'armadura', 'botas']
+        const labels = { espada: 'Espada', capacete: 'Capacete', armadura: 'Armadura', botas: 'Botas' }
+        if (collected.length > 0) {
+          checklistText.text = allItems.map(key =>
+            `${collected.includes(key) ? '☑' : '☐'} ${labels[key]}`
+          ).join('\n')
+        } else {
+          checklistText.text = ''
+        }
       })
     }
     createHUD()
@@ -343,7 +331,7 @@ export function setupScene(k) {
         moveTargetCell = null
         if (mr >= 0 && mr < ROWS && mc >= 0 && mc < COLS) {
           const cell = mapaFiltrado[mr][mc] // Ajustado aqui para ler do mapaFiltrado
-          if ((cell === 'r' || cell === 'b' || cell === 'g' || cell === 'a' || cell === 'G' || cell === 'f') && !get(inBattle)) {
+          if (cell === 'f' && !get(inBattle)) {
             const enemyObj = k.get('enemy').find(e => {
               const ec = Math.floor(e.pos.x / TILE_SIZE)
               const er = Math.floor(e.pos.y / TILE_SIZE)
@@ -351,7 +339,7 @@ export function setupScene(k) {
             })
             if (enemyObj) {
               const key = enemyObj.enemyKey
-              if ((key === 'g' || key === 'a' || key === 'G' || key === 'f') && !get(hasSword)) {
+              if (key === 'f' && !get(hasSword)) {
                 showMessage('Preciso de algo mais forte...')
               } else {
                 inputQueue.length = 0
@@ -371,7 +359,7 @@ export function setupScene(k) {
                     k.destroy(enemyObj)
                     destroyBattleUI()
                     inBattle.set(false)
-                    if (key === 'G') {
+                    if (key === 'f') {
                       moveTargetCell = null
                       inputQueue.length = 0
                       for (const rock of k.get('rock-obstacle')) k.destroy(rock)
@@ -385,7 +373,7 @@ export function setupScene(k) {
           } else if (cell === 'E' && !get(gameWon) && !get(gameOver)) {
             checkExitTile()
           }
-          const itemChars = { t: 1, p: 1, w: 1, S: 1, '1': 1, '2': 1, '4': 1 }
+          const itemChars = { t: 1, S: 1, '1': 1, '2': 1, '4': 1 }
           if (itemChars[cell] && !get(inBattle)) {
             const itemObj = k.get('item').find(e => {
               const ec = Math.floor(e.pos.x / TILE_SIZE)
@@ -429,6 +417,7 @@ export function setupScene(k) {
     // ── Cleanup on scene re-enter ────────────────────────────────
     k.on('sceneLeave', () => {
       if (timerInterval) clearInterval(timerInterval)
+      if (shakeInterval) clearInterval(shakeInterval)
     })
   })
 }
